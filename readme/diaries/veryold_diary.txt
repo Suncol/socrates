@@ -1,0 +1,377 @@
+	Successive work versions of the 2dv5b model - S.Chabrillat
+	==========================================================
+	
+Version 2
+---------
+Very close to Theresa's and Stacy's versions. wave.f : xcc and xww set to 7.5
+(Theresa's email 2/2/1996). Temperature lower boundary corrected to 2km instead
+of 0 km (Theresa's email 2/12/1996). 2 new archives : noonarch.nc for J and
+chemical species at noon. Discontinuity at 50km in OH number density and
+pch due to HOx partitioning : ilimit = 51 in chembox.f
+2-year run OK *but* has to use Stacy's libraries.
+
+Version 3
+---------
+ilimit=41 in chembox.f => much smaller discontinuities, at 40km.
+Stacy's correction of the wave.f (email 3/22/1996) code included : 
+logical error in day-indexing of complex array cbnd(lmax,360) in subroutine
+WBOUND (called by WAVEMD) when day index>360 => crash after 6 months.
+This correction allows the "long" script (compiling my complete source code,
+not using Stacy's libraries) to work.
+2-year run OK => archive3.2yr.nc, noonarch3.2yr.nc, diuvarch3.2yr.nc
+Lots of results printed for Guy Brasseur.
+
+Version 4
+---------
+- Plotting with NCARGraphics removed (variables plind,plotsw,strtpl,nplot,diags).
+file plot.v2.f (subroutine PL2d) deleted. Compiles with no NCARgraphics libraries.
+
+- Archiving the surface areas of the PSC : new module PSC_OUT, sapsc1da and
+sapsc2da calculated in chem_diavg.f
+
+- Big cleaning of the useless switches :
+n1=1 : Lindzen's (1981) parameterization of GW and Kzz removed.
+	files gravity.f and tgravity.f deleted. n1=0 and n1=2 still available.
+n2=1 : Hitchmann & Brasseur's parameterization of RW was not there anymore.
+	n2=0 and n2=2 still available.
+n6=1 : Dickinson's (1984) parameterization of NLTE cooling was not there
+	anymore. File heat_rate.f deleted, and code corresponding to n6=2
+	directly included in main.f. File heat.f kept for n6=0, still available.
+iswave : switch removed entirely. Uses new solar heating and separate treatment
+	  of chemical heating, i.e. iswave=4, except 1st time-step of no-restart
+	  simulation, where I have kept iniwave=0.
+	  Files pho.f, phodis.f, phorat.f, heat.f modified (dummy argument iswave
+	  deleted).
+Modules in main.mod.f and *.xface.f updated
+
+1-year run OK *but* I get some small, but significant, differences with 
+version 3, although I did not expect any :
+fx increase above 105km
+fr variations everywhere (almost none where fr is important)
+pch : big increase (70%) in polar night at 90km exactly (where pch is small)
+qcool : very localised and big variations at tropopause and mesopause
+Dobson map : the spring-values at the southern pole gets better (decrease
+of 30 D.U.) but worse at the northern pole (increase of 40 D.U.).
+--> probably still memory management problems (e.g. co2.f problem)
+Resulting archives : archive4.1yr.nc, noonarch4.1yr.nc, diuvarch4.1yr.nc
+The new output variables for PSC surface areas are always 0, which confirms
+my thought that the PSC mechanism is not working (although the temperature
+gets as low as 190K in lower stratosphere's polar night)
+
+Version 5
+---------
+Corrections by DIURNAL_ADJ of the Ox, NOx noon values after diffusion : 
+greatly enhanced by using the chemical partitioning rations qcratnoon
+defined in new module CHEMPARTNOON and calculated in the main, just after
+...Impose "floor" on mixing ratios values.
+O(3P) and NO2 were set to 0 at random altitudes, this fixes it.
+Adjustment extended to ClOx and BrOx species.
+See e-mail to Stacy and Theresa, 4/18/96.
+OH peak in polar night seemed to extend to other latitudes because of its 
+transport by slt -> oh and ho2 transport commented in slt.
+Resulting archives : archive5.90d.nc, noonarch5.90d.nc, diuvarch5.90d.nc
+OH and HO2 peak at 92 km still present at all latitudes despite slt change.
+
+Version 6
+---------
+Read litterature : peak of OH around mesopause OK, OH increase during night at 
+mesopause (reversed diurnal variation compared w/ strato) OK.
+"Only" problem of 2d : this peak too high by one order of magnitude.
+-> OH and HO2 now advected by slt . It will be diffused later.
+- diurnal variations archives : now 10 available, each has its own latitude
+and beginning date.
+- Boundary condition on atm_h : changed from specified vmr of 1e-5 to
+specified flux of 1e8 (Allen & al, 1984), Subroutine BOUNDY, file asg.f .
+- Artificial limit of 1e-4 for atm_h commented in the main.
+- co2.f heavily corrected by Theresa
+- solar heating by O2 absorption in phorat.f completed to take in account
+jo2_o1d (by Theresa)
+Resulting archives : archive6.90d.nc, noonarch6.90d.nc : much better results
+for atm_h vertical profile. OH problem not solved. Much better heating
+but no big difference in temperature since boundary condition on T did not change.
+A 2 years run succeeded with Dobson column OK, but output is lost.
+
+Version 7
+---------
+- From now on, code maintained on torres.acd.ucar.edu:/ji/simonc/2dv5b/src
+- Suspicious about reaction a24 in chembox -> set a24(k)=0. in chembox
+- Implemented new stacy's code for waves and radiation :
+/u/stacy/2dmodel/v5b/src/new/*.f with 2 new modules : rad.mods.f & wave.mods.f
+(don't forget to add them in the script at module compilation time !)
+This updated ccmrd1_aero.f, ccmrd2_aero.f, radnew_aero.f, replaced wave.f by
+ wave.v2.f. Files datain.f, xface.f and radcsw.f were removed.
+Resulting archives : archive7.1yr.nc, noonarch7.1yr.nc, diuvarch7.1yr.1.nc : 
+Discovered a bad Rossby flux fr after 3 months of simulation (sept 1995).
+Was there already in previous versions, but new STacy's wave code gives 
+different, but as bad, results. Linked with bad initial conditions since it
+does not show up after 15 months in archive3.2yr.nc.
+Removing reaction a24 (H2+O->OH+H) reduces [oh] only above 110km .
+
+Version 8
+---------
+- Reaction a24 activated again
+- NIGHT_SUB corrected : oh jacobian completed with d85 and b73a ; no3 losses
+and jacobian completed with b72 and (b73a+b73b) -> no difference in oh or ho2
+(problem still there) but no3 decrease between 50 and 90 km (1 order of
+magnitude at 90km). Correction of night_sub to keep because makes chemistry
+more consistent.
+- Trial with reaction a7 (HO2+O->OH+O2) reduced by 70% in chembox, following
+Clancy & al., JGR 1994, p.5471 -> Temperature after 10 days (7/1/1995)
+gets above 350K around alt=30km ! -> STOP by CHRCMS (ccmrd1_aero.f) which
+checks for temp range ! -> range checked by CHRCMS extended from 100-350K
+to 100-400K modifying rt(2) in module RATMOS (rad.mods.f) ; a7 set back to
+previous value of 3.e-11*exp(200/T)
+- Output of detailed productions and losses of OH at night added in night_sub.f
+for equator, at altitudes 85km and 88km : written in fort.19
+- Night chemistry of the long-lived completed : in chembox, .not.daylight, added
+d11 & a82 as H2O production
+d85 & d11 as HCl losses ; d46 as HCl production
+c2 as CH4 loss
+b73b as HNO3 production
+b23 as HO2NO2 production (b24 should be added in night_sub as ho2 and no2 prods)
+d33 as HOCl production
+e15 as HOBr production
+	
+Version 10
+---------
+Stacy's source code as of 5/10/1996, with restart working. Includes :
+- ilimit=41 in chembox
+- subroutine WBOUND called by WAVEMD (file wave.f) corrected
+- DIURNAL_ADJ for diurnal adjustment after diffusion corrected with 
+  variable qcratnoon
+- co2.f corrected by Theresa after her return from Paris
+- solar heating by O2->O(1D) absorption in phorat.f completed
+--> archives archive10.1yr.nc and archive10.2yr.nc, restart file
+/scratch/simonc/netcdf/restrt/save.10.7-11-1997.nc
+
+Version 11
+---------
+- Boundary condition on atm_h: changed from specified vmr of 1e-5 to
+  specified flux of 1e8 (Allen & al, 1984), Subroutine BOUNDY, file asg.f .
+- Boundary condition on h2 : changed from specified vmr of 1e-5 to
+  specified flux of 1e7 (not enough, increased to 1e8 in next version)
+- Night chemistry completed to have conservation of total of H atoms.
+  In chembox.f, .not. daylight, added :
+	d11 & a82 as H2O production
+	d85 & d11 as HCl losses ; d46 as HCl production
+	c2 as CH4 loss
+	b73b as HNO3 production
+	b23 as HO2NO2 production
+	d33 as HOCl production
+	e15 as HOBr production
+	b22 as HNO3 production
+  In night_sub, added :
+  	d85 and b73a in line OH of the jacobian
+  	b72 and (b73a+b73b) as NO3 loss and in NO3 line of jacobian
+  	b24 as HO2 production
+  To completely close the system, had to "invent" products for 
+  reactions c2 and c10. As proposed by Guy, we make the hypothesis that
+  c2   CH4 + OH ->  ... + O2 -> CH2O + H2O + HO2
+  c10  CH2O + NO3 -> HNO3 + ... + O2 -> HNO3 + CO + HO2
+  As consequence, in chembox.f, .not. daylight, added :
+  	c2 as H2O productions
+  	c10 as CO production
+	and replaced the CH2O production c1a*O(1D)*CH4 by c2*CH4*OH
+  ..and in night_sub, added c2 and c10 as HO2 productions and in jacobian
+
+--> archive archive11.1.5yr.nc. We still see a drift in dobson map even 3.5 years
+after internal start. HOBr distribution now reflects HOx problems
+(there was no production/loss in previous versions).
+Restart file /scratch/simonc/netcdf/restrt/save.11.1-2-1999.nc
+
+Version 12
+----------
+- Boundary condition for H2 : flux of 1e8 molec/cm2/s -->  all H2 above +-104km
+goes completely away during first months of run before being fed again by upward
+vertical transport (?). But this "hole" of H2 still there after 1yr run
+above +-112km at summer high altitudes (corrected in version 14).
+- Artificial maximum of 1e-4 for H vmr removed from main .
+- subroutine CHECK_H written to check total content of H
+- new washout of soluble species (Hough 1991) installed by Theresa 
+  (e-mail 5/17/96)
+- All corrections by Theresa for polar day installed : e-mail 5/17/96, 
+  sol_chm_heat and sol_day actually enhanced on Theresa's version
+- unit error in moldiff.f fixed by Theresa : at the end, do NOT multiply xmz by
+  1.e-4 (already done in const), xmz is already in m2/s
+--> archive archive12.1yr.nc : 1 yr run after internal start
+archive12.5dr.nc : 5-days run starting 1 yr after internal start
+Restart file /scratch/simonc/netcdf/restrt/save.12.6-16-1996.nc
+
+Version 13
+----------
+- H budget was not conservative at 90km -> night calculation of H2, H2O, H2O2
+in night_sub. Fixes conservation problem but "weird"(?) values for H-species
+at mesopause still there. New subroutines chembox.f, night_sub.f .
+- New module created : chem_rates.mods.f , contains modules CHEM_CONST,
+CHEM_RATES_HEAT and CHEM_RATES_NIGHT. !chem_rates.mods to be compiled before
+module main.xface (modified also)
+--> diurnally averaged global fields did not change much
+archive archive13.1yr.nc : 1 yr run after internal start
+Restart file /scratch/simonc/netcdf/restrt/save.13.6-16-1996.nc	
+
+Version 14
+----------
+- Constant reaction rate a23a had been set to 0 at unknown date. This decreased
+oh peak by a factor of 2 in versions 11, 12, 13 compared to previous versions.
+a23a set back to 8.1e-11 * .9 in const.f
+- Calculation of xkz in frdrag.f proportional to an arbitrary coefficient A,
+until now 1.e-2 when can be as high as 1/3 (cf Weinstock,J.Atm.Terr.Phys.1984
+ p.1077). Result : max xkz reached in previous versions : 13 m2/s
+when from litterature it seems Kzz reaches easily 200 m2/s at mesopause.
+This coefficient set to .2 (new parameter a in frdrag.f) to increase eddy 
+diffusion coeffcient xkz. Result : max xkz : 155 m/s2 at 96km and -50lat
+on 6/21/1996. Did not change much chemical fields (H too high by 2 orders of
+ magnitudeabove 90km) but for H2 "hole" (see version 12) which disappears
+completely (even from polar day) after 3 months of run (9/24/1995).
+archive archive14.1yr.nc : 1 yr run after internal start
+Restart file /scratch/simonc/netcdf/restrt/save.14.6-16-1996.nc
+
+Version 15
+----------
+Since H2, H2O and H2O2 were added (version 13), chem_iter loop did not converge
+any more : species n2o5, oclo, hcl, clono2, hocl, cl2, clno2, nox, clox, brox
+and cl2o2 not converging at 9km, precise reason unknown.
+Furthermore, bad interaction between H2O lost by PSC condensation and H2O
+in night_sub (both processes compete in short_iter loop, before version 13 h2o
+was calculated outside short_iter loop).
+--> version 15 : back to chemistry of version 12, although we keep
+ a23a=.9*8.1e-11 in const.f , xkz=.2*e/N2 in frdrag.f, and the new module
+file chem_rates.mods.f
+archive15.5dr.nc, 5-day long run from save.14.6-16-1996.nc, has been compared to
+archive14.5dr.nc, 5-day long run from save.14.6-16-1996.nc.
+The differences are big for H2O in PSC-region, other differences for H, H2, H2O,
+H2O2, HO2, and OH are around 92km but never more than 25%, and total H is 
+actually bigger in archive14.
+Conclusion : chemistry of version 13 & 14 is given up 
+(saved in back/chembox.v14.f and back/night_sub.v14.f), its only advantage was
+a chemistry conservative for the number of H atoms at 92km, but no significant
+change there, at the price of screwing everything at tropopause. 
+Chemistry of version 14 could be used for future versions where lower boundary
+raised above tropo, and PSC removed. Or should be used only above 64km.
+
+Version 16 - 6/13/96
+--------------------
+(1) wu (w at 120km) set to diabatic wind wd1 calculated in BVFREQ and corrected
+for global mass balance by WUP : Theresa's e-mail 6/13/96
+--> in main.f : remove all settings of wu=0. and call to WUP after NLTE 
+calculation. Instead, call WUP just after BVFREQ :
+	 call BVFREQ( )
+!-----------------------------------------------------------------------
+!     diabatic vertical wind component at the upper boundary
+!     WUP to correct wu() for global mass balance and calculate xu()
+!-----------------------------------------------------------------------
+         wu(:) = wd1(:,niz)
+         call WUP( jphi1, jphi2, jphi3 )
+--> subroutines WUP in heat.f and BALANCE in balance.f modified.
+
+(2) First improvements to use the *geometrical* altitude grid where needed :
+- Two new modules added to main.mod.f : module ZGRID contains zgeo and Hair .
+module BACKATM contains constant data : xmixn2, xmixo2 and awmole from MSIS .
+This data should be used consistently in the model (now xmix1 and xmix2 are
+inconsistently redefined where they are needed)
+- Calculation of hm2d removed from ADJ (chem_subs.f). hm2d Calculated now in new
+subroutine ATMCOND (atmcond.f) whith geometrical altitude zgeo and corresponding
+scale heights Hair. ATMCOND is called at 2 places by the main : during 
+initialization, immediately before "call ADJ" , and after shapiro-smoothing of 
+temperature, immediately after "call SHAP"
+- Photolysis calulation now uses column densities based on geometrical altitude
+grid. Subroutines PHO_STAM (pho.v2.f), PHODIS (phodis.v2.f), 
+AEROSOL (aerosol2.v2.f), MINSCH (minsch.v2.f) and interface module 
+PHO_XFACE (pho_xface.f) . archive archive16a.1yr.nc : internal start
+ The results after one year of simulation seem 
+good, with J's increased above 60km (e.g. [O(1D)] increased by 50% at 100km,
+[H2O] decreased by 40% at 90 km). Vertical profiles of the mixing ratios are
+smoother. Solar heating rates have increased (max of 35% at the poles)
+in the mesosphere and decreased (-40% at 110km, all latitudes) in the 
+thermosphere. Effect on temperature is small : 3% increase in the mesosphere,
+7% decrease in the thermosphere.
+I think there are still problems in polar night, since my modifications of
+PHODIS seem to have effects on polar night chemistry as well.
+
+Version 17 - 6/28/1996
+----------------------
+(1) moldiff.v2.f calculates wdif and xmz correctly, using zgeo->z* 
+diffus.v3.f corrected by Stacy for zgeo->z*. Masses of families calculated 
+from weighted masses of their constituents. The process itself works : 
+no problem in H2 profile near 120km anymore ; number densities of species 
+lighter than air increased, opposite for species heavier than air. 
+H is still much too big (problem elsewhere). Overall effect of molecular
+diffusion is not so important, H and H2 excepted.
+
+(2) NOx = NO+NO2 built-in NIGHT_SUB but NOX re-adjusted afterwards by 
+IT_CONSERV, NO and NO2 were not. IT_CONSERV corrected to adjust NO and NO2 also.
+
+(3) Found a trick to divide by 1.5 the model execution time (12hr/yr -> 8hr/yr)
+with no loss on precision and no modification of the model itself.
+Subroutine IT_NORM must be inlined into CHEM_BOX. This can be done using a new
+feature of the Cray compilers. When compiling chembox.f, add an option :
+f90 -O inlinefrom=it_norm.f -p 2d.mods.a chembox.f
+This inlining should be later programmed manually, for better portability.
+archive archive17r.1yr.nc : 1 yr run from Dec/28/1999 (4.5 yrs after internal
+start) to Jan/12/2001.
+Restart file /scratch/simonc/netcdf/restrt/save.17.12-23-2000.nc	
+
+Version 18 - 7/23/1996
+----------------------
+chembox.f finally split. New module file : chem_xface.f . Module files main.xface.f 
+and chem_rates.mods.f modified. const.f and night_sub.f modified.
+chembox.f is now like a main to call the following subroutines (new files) :
+calc_chem_rates.f, chem_psc.f, chem_aero.f, day_sub.f, chem_prpe_night.f. 
+it_norm.f has been manually inlined into chembox.f . Small random differences with 
+v17, although there should be none : code seems a little unstable, i.e. programming
+changes which should have no effect have small ones - variables not defined ?
+archive ARCHIVE18R.1YR.NC to compare with ARCHIVE17R.1YR.NC
+H problem found to be caused by reaction a5 O+OH->H+O2 where no corresponding OH loss.
+Version 18v2 : failed attempt to use Didier's way of calculating OH and HO2
+everywhere, not just below 40km. Yields OH too low around 70km -> O3 much too big.
+Also, convergence problems with the chem_iter loop.
+
+Version 19 - 8/2/1996
+---------------------
+Fixed the hox problem at high altitude by creating a new family hox=h+oh+ho2,
+which has replaced h as a long-lived species with index 34. h is now a "short-lived" 
+species with index 14. Night calculations by Stacy's NIGHT_SUB not modified.
+hox calculated only during day above 30km. In DAY_SUB, we use 3 altitude regions :
+First we calculate r4 = h/oh from h PCE, between 0 and 70km. 
+Below 30km, oh and ho2 are in PCE and calculated directly from a quadratic equation 
+(Didier's method), then h = r4 * oh.
+Between 30 and 70km, we calculate r6 = ho2/oh from ho2 PCE. We then partition the 
+hox family, using r7 = oh/hox = 1 / (1+r4+r6) ; r8 = h/hox = r4*r7 and 
+r9 = ho2/hox = r6*r7 .
+Above 70km, we calculate r12=h/ho2 from ho2 PCE and r13=oh/ho2 from oh PCE.
+(note that h is NOT at PCE). We then partition the hox family, using
+r14 = ho2/hox = 1/(1+r12+r13) ; r15 = h/hox = r12*r14 and r16 = oh/hox = r13*r14
+The results are quite good : h above 70km is right, conservation of total h
+is not as bad as before. The calculation of h, oh, ho2 in DAY_SUB converges, with
+discontinuities of noon values (but not for diurnal averages) at 30km (not at 70km).
+Some problems in tropo where oh, ho2 can take randomly huge values at single points.
+Modified modules : chem_xface.f  def_names.f   main.mod.f    module.f
+modified subroutines : arch.f, chem_prpe_night.f, diuvarch.f, night_sub.f, asg.f, 
+chembox.f, main.f, check_h.f, day_sub.f, chem_prpe_day.f, diurnal_adj.f, moldiff.f
+A new subroutine for archiving of diurnal variations has been crated : diuvarch.f
+(the input namelist sim_controls has been extended accordingly).
+archives archive19.1yr.nc and diuvarch19.1yr.nc
+
+Version 20
+----------
+Used a new NIGHT_SUB, simplified from DAY_SUB. hox and ox were calculated at night 
+also. This new NIGHT_SUB, based on partitioning families, seemed to converge
+*but actually does not work* : at the very top part, h increases continually, and oh
+shows discontinuities at 30 and 70km during the night timesteps. Had to return
+to the old night_sub (oh and ho2 PCE probably untrue at night for our long timesteps).
+Since version 19, a numerical problem (no hox convergence at sunrise) made h2o 
+increase by 0.9% at every sunrise, causing crashes after 23 months of simulation. 
+Fixed by forcing recalculation of h2o every time hox is calculated :
+qn2_con(h2o) = qn2_con(hox) in chembox. Discovered 
+that DAY_SUB often does not converge for the species other than h, oh, ho2. 
+The calculation of long-lived species always converges.
+Removed (definitely?) the boundary conditions of h, h2 at 120km : replaced fluxes 
+of 1e8 molec/cm2/s by 0 (asg.f), because bad interaction with new molecular diffusion :
+yields negative values of hox and h2 above 105km. Maybe moldiff takes care of the flux
+through the 120km boundary ? (cf velocity term).
+The noon values of the long-lived species are transported by SLT. The short-lived 
+species are now scaled to keep conservation of the "small" families : use of qcratnoon
+as after diffusion, see e-mail of 4/22/1996
+
+
+

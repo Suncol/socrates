@@ -1,0 +1,60 @@
+
+Try playing with env. var. OMP_SCHEDULE
+Tried export OMP_SCHEDULE="STATIC,1" : has almost no effect 
+(11-day sim is 3s faster)         
+
+
+         v7s08: mainsw(11)=0, 3-year sim, OMP_NUM_THREADS=5
+         --------------------------------------------------
+
+                                 REALt      REALt      REALt       CPUt        CPUt
+v7s08 : daypas=1,chemdtm=60  -> 50s/day, 5.0h/year, 10.5day/50yr, 110s/day, 559hr/50yr
+v7s08a: daypas=5,chemdtm=120 -> 27s/day, 2.7h/year,  5.6day/50yr,  55s/day, 278hr/50yr
+
+v7s08a: TIMING SUMMARY FOR THE MAIN
+-----------------------------------
+
+                         CPUt        %CPUt
+              Init : 8.61E-01 sec ;   0.0 %
+      MSIS-ATMCOND : 3.81E+02 sec ;   0.6 %
+              heat : 2.46E+01 sec ;   0.0 %
+             Winds : 5.46E+03 sec ;   9.0 %
+              Temp : 2.56E+02 sec ;   0.4 %
+        BOUNDY-GCC : 1.50E-01 sec ;   0.0 %
+              CHEM : 5.48E+04 sec ;  89.8 %
+      other & arch : 6.25E+01 sec ;   0.1 %
+ --------------------------------------------------
+             TOTAL : 6.10E+04 sec ; 100.0 %
+
+real   8h9m52.68s  = 2.94e+04 sec
+user  16h55m37.21s = 6.09e+04 sec
+sys    1m2.98s
+ 
+ TIMING FOR CHEM
+ ---------------
+                         CPUt        %CPUt      REALt        %OMPeffic
+             Begin : 0.00E+00 sec ;   0.0 %
+        TABLES_PHO : 5.62E+03 sec ;   9.2 %
+              *RXT : 1.66E+02 sec ;   0.3 %
+  ADVECT_CHEM (omp): 1.42E+04 sec ;  23.3 % ;  4.49E+03 sec ;  63.2 %
+       CHEMDR (omp): 3.10E+04 sec ;  50.7 % ;  1.06E+04 sec ;  58.3 %
+             HDIFF : 2.87E+03 sec ;   4.7 %
+ --------------------------------------------------
+               SUM : 5.38E+04 sec ;  88.2 %
+   Check: true sum : 5.48E+04 sec ;  89.8 %
+ 
+ 
+ TIMING FOR CHEMDR
+ -----------------
+                         CPUt        %CPUt
+      Init+WASHOUT : 9.50E+02 sec ;   1.6 %
+          PHO_CHEM : 4.52E+03 sec ;   7.4 %
+      special prods: 2.06E+02 sec ;   0.3 %
+           IMP_SLV : 1.55E+04 sec ;  25.5 %
+        DIAGS_CHEM : 4.62E+01 sec ;   0.1 %
+             VDIFF : 1.81E+03 sec ;   3.0 %
+        HEAT_RATES : 7.05E+02 sec ;   1.2 %
+               end : 5.28E+02 sec ;   0.9 %
+ ----------------------------------------------------
+               SUM : 2.43E+04 sec ;  39.9 %
+   Check: true sum : 2.91E+04 sec ;  50.7 %

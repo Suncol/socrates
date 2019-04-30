@@ -1,0 +1,17 @@
+
+
+
+
+                view2D : an IDL browser for 2D+time netCDF files
+
+                                version 5.0
+                     january 2000 - not released yet
+
+                        freeware written for IDL v5.0
+
+                  by Simon Chabrillat ( email: simonc@oma.be )
+
+                  at the Belgium Institute for Space Aeronmy
+
+                and at the National Center for Atmospheric Research,
+                        Atmospheric Chemistry Division

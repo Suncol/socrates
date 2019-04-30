@@ -1,0 +1,387 @@
+              SOCRATES Version history from 15 april 2000
+              -------------------------------------------
+
+Development based on v4s033, see myversions_v4.txt
+Major difference with v4s is introduction of the preprocessor written by 
+Stacy Walters and simplified by myself (Simon Chabrillat) - see
+simplify_preproc.txt
+
+v5s01: First use of the preprocessor socpp
+------------------------------------------
+New subdirectory preproc, contains executable socpp which, from its 
+input file *.in and its subdir preproc/in, writes preprocessed.mod.f, 
+preprocessed.f and soc.dat . Several important modules are moved from chem.mod.f
+to preprocessed.mod.f . In lots of chem-related files, replaced 53 by nbcon, 7
+by hetcnt, 188 by rxncnt, (121 by niz & 35 by lmax). These parameters are set in
+modules SPECIES_DIMS and CHEM_MODS in preprocessed.mod.f written by the
+perprocessor. preprocessed.f contains the following routines 
+(see simplify_preproc.txt): IMP_SLV, IMP_PROD_LOSS, INDPRD, LINMAT, NLNMAT, 
+LU_FAC, LU_SLV, SETRXT, ADJRXT, PHTADJ, ACC_LOSS, SW_SECOND, TIME_DIFF, SOC_INTI
+The preprocessor must be re-used only when the photochemical scheme (or reaction
+rates) is changed, or when porting to a new platform.
+The whole socrates src code must be re-compiled every-time preprocessed.* is
+updated, except when only reaction rates are changed.
+
+v5s02: Removed adaptive time step from preprocessed chem solver - WORKS
+-----------------------------------------------------------------------
+The cache version of IMP_SLV, the chem solver written from preproc/in/imp_slv.F, 
+contained an adaptive timestep size. This was not the case in the cray version 
+or the v4s versions. Although Stacy tried to adapt IMP_SLV to Cray, it didn't
+work, plus there is no control on exec time if the time step is adaptive.
+Removed from the original source imp_slv.F all instructions to change the chem
+timestep, reverting to the simpler v4s algorithm.
+The reaction rates contained in the *.in socpp input file were wrong &/or
+out-of-date. Reverted to updated v4s033 values. This results in changed code in
+SETRXT (preprocessed.f). Added "machine = HP" possibility to the preprocessor.
+Results compared with v4s033: O3 profiles slightly larger in strato, as good
+compared with CIRA96.
+
+v5s03: testing socpp abilities by adding fake species X and XO - WORKS
+----------------------------------------------------------------------
+Finished replacing all parameters such as 121, 35, 53, 46... by their
+corresponding names niz, lmax, nbcon, phtcnt... set in SPECIES_DIMS, CHEM_MODS
+and GRID_DIMS. Since soc.dat changes every time preprocessor is re-used, and
+older versions do not work with newer soc.dat, renamed soc.dat to
+preprocessed.dat and put subdir data in version subdir. For this, modified:
+preproc/in/soc_inti.x.F , preproc/src/main.f , csh scripts .
+Added two fake species X and XO with 2 fake reaction  xo + o2 -> x + o3 and
+ x + o3p -> xo  to test abilities of preproc. Works well, see add_species.txt
+for necessary changes besides preproc input file.
+
+v5s04: v5s02 chem with inert tracer X - WORKS
+---------------------------------------------
+fx output corrected, from m/s2 to m/s/day.
+Last test of preproc, added X to v5s02 chemistry with molar mass of 27 and 
+constant lbflux at 45degs North. Works well. v5s04a: reverting to olf vert diff
+scheme, ie VDIFF_NEW replaced by VDIFF and MOLDIFF. Results are almost
+identical, proving that my new algorithm is not better than the previous one
+(although clearer and better documented) but it is better used, ie in v3cII51
+most species are excluded of moldiff and the ubc is bad.
+
+v5s05: added dry deposition velocity wd at lb ; corrected Kzz - WORKS BUT...
+----------------------------------------------------------------------------
+Since v3s73, when VDIFF was replaced by VDIFF_NEW, the dry deposition velocities
+wd (defined in module DEPVEL, set in BOUNDY) were not used. This resulted in too
+high tropo H2 and probably CO. Implementing wd in VDIFF_NEW (see SOCRATES 
+paperbook, 6/17/1999). All corresponding species (and O3) get smaller in tropo,
+where these concentrations now similar to v3cII51. 
+In PHODIS, replacing g0 by gtop. Negligible impact. In VDIFF_NEW, replacing g0
+by g100. Negligible impact.
+Trying to re-tune DYNF_GWAVE to get big meso xkz as v3cII51/gravity.w2.f does. 
+Found "bug": input dummy arg floc=0.2 in v5s, 1. in v3cII51 (ie useless).
+Removing floc from v5s05. Very good results, xkz gets 3-4* bigger at 100km ->
+broader peaks of mesospheric H, O, O3 -> less ChemHeat -> global mesopause gets
+colder by 10K *but* the test in DYN_U against singularity stops simulation after
+9 months (at N. summer solstice). Trying to replace interactive u by u from HWM:
+fails, fx->w gets much too big. Using interactive u, setting afac=50 in
+DYNF_GWAVE: crashes too (u singularity) with very bad values appearing suddenly
+on apr/27/1996. 
+v5s05a: DYN_U uses u_hwm to calculate u. No crash, u not so different than
+totally interactive calc, and *excellent* results. Colder mesopause (see above).
+Less meso O(3P), much closer to MSIS (good/bad?), smaller annual var as MSIS.
+Last problem remaining: mesopause has same T at all lats, no lat grad, polar day
+mesopause should be much colder.
+
+v5s06: implementing OFFLINE abilities & some fixes - WORKS
+----------------------------------------------------------
+When tried to tune GW, noticed an exemplary feedback loop: w change -> 
+O(3P) changes -> ChemHeat changes a lot. To tune GW forcing, I want to avoid 
+feedback loops. Implemented offline abilities:
+New module OFFLINE (below module SIM_CONTROLS) contains
+read_offline, write_offline, offline_heat, offline_winds
+offline_batm, jump_chem, offline_t, offline_hres
+all set to .false. by default. control_parms input namelist now reads 
+read_offline, write_offline. If write_offline, routine OFFLINE_WRITE_NC writes
+*.offline.nc containing time-dependent offline values to be read by later by
+simulations which have read_offline=.true.
+The other offline switches are read in new input namelist offline_parms.
+offline_heat: The total heating rate, qsum, is read offline. Notice we use qsum
+              i.o. q because q is modified by t2d when t2d is calculated
+offline_batm: ATMCOND uses O, O2, T by MSIS to calculate all its values
+              We will set offline_batm most of the time because it removes lots
+              of complex, unwanted couplings. Transferring calc of xtz and mu
+              from DYNF_TOTAL to ATMCOND since it depends on batm.
+jump_chem: the chemistry is not calculated!! This is possible only by setting
+           offline_heat (done in CHECK_CTRLS)
+Remaining offline switches are not tested yet.
+NETCDF_READ in nf_utils.mod.f was corrected to allow reading time-dep values.
+It is proven that using same source code and input in write_offline and
+read_offline calcs , jump_chem and/or offline_heat give *exactly* the same 
+results as full calc with offline_batm (t2d absdiff < 4.e-5 K after 3 months).
+Furthermore, jump_chem and offline_heat give *exactly* the same results (t2d
+absdiff always = 0), i.e. with offline_heat the chemical results are *pure*
+diagnostics with *no* influence on dyn-t.
+
+New control switches:
+if n6=0 : DYN_U uses HWM u to calc interactive u (as in v5s05a)
+          Often we'll set n6=0 although it's not the default.
+if n7=0 : *no* Chemical Heating - MAIN doesn't call CHEM_HEAT (-> srheat3 = 0)
+          notice: run with chemheat=0 and 2-level mesopause still there !
+          The "bump" of T near mesopause is still there -> is not due only
+          (or always) to ChemHeat. It is probably due to UVSol_O3 too.
+          
+Fixed tidal eddy diff coeff dkt bug: probably since v4s019, we have dkt (module
+TIDE) not initialized becuase DYNF_TIDE is never called, as if n4=0.
+DYNF_TIDE now called from MAIN before time loop. The presence of dkt smoothes
+the "bump" of T near mesopause.
+
+v5s06: failed to tune GW
+------------------------
+v5s06a: increasing afac from 10 to 30 in DYNF_GWAVE: uninteresting results
+v5s06b: decreasing u00 from 0.35 to 0.2: DONE! level where GW begins to be
+absorbed raises -> GW have less "room" to break -> their energy input (fx) is
+more focused -> see vert progiles of w: no reversal any more, upward in polar
+day and downward in polar night -> Finally meso T shows lat gradient (still too
+small and baseline too high). Notice the 2-level mesopause disappears  :-(
+- GW tuning to get lat grad of T: amplitude afac has *no* influence, only u00, 
+  ie setting height where GW are absorbed, does.
+Even decreasing u00 to 0.2 does not give satisfying results, and using jump_chem
+does not help to understand why: see email to A. Smith, "Gravity Wave
+parameterization", 30 may 2000.
+
+v5s07: implementing Hines GW param - WORKS MUCH BETTER
+------------------------------------------------------
+See emails from A. Smith on 30 may and 8 june 2000. New files
+hines97.gwave.dyn.f (from orig hines_driver.f and hines.f) and ccm3.gwave.dyn.f
+(from orig gravity.mod.f and gravity.cgw.f). dynf_gwave.f renamed
+asmith.gwave.dyn.f.
+CCM3 param needs lots of work to be used. Discraded for now. 
+Hines param works very well, main bug in orig version sent by A. Smith: denzz 
+needed to be saved. Converted to f90. Good results, time series of dyn vars is
+*much* smoother, mesopause is colder, w shows less alt reversals, Kzz is much
+much bigger. Still, no lat grad of T.
+v5s07b: using the heating rate gwheat calculated by HINES97.
+v5s07c: icutoff->0, good results, finally a (small) lat grad of T
+shows up, meso T in polar night gets warmer than v5s07b ie closer to MSIS.
+Tried with dyn_steps=1: differences at the beginning of the sim, but after 3
+months they get smaller.
+Most interesting params to tune: k_alpha, rms_wind (from 2 to 3), m_min
+Increasing rms_wind from 2 to 3 decreases T *everywhere* (chem feedaback?)
+and seems to begin creating the 2-level mesopause. Since rms_wind is 
+lat-dependent, why not make it depend on lat and season?
+Increasing k_alpha seems to have similar effects than increasing rms_wind
+
+v5s08 - changing offline implementation, tuning Hines GW - WORKS WELL
+---------------------------------------------------------------------
+All tuning test should be made with no gwheat and jump_chem=.true., *but* qcool
+should be calculated from offline CO2 (the qcool(T) dependence is too 
+strong to read offline qcool). offline.write.nc.f and offline.read.nc.f now
+write/read CO2, O(3P), O3, O2, H2O, NO. HEAT_IRCOOL is called even when 
+offline_heat, but using the archived chem values.
+offline.read.nc.f read pch (sum of solheat) and cool (CCM1 tropo rad cooling).
+In MAIN, increment time (and end of jump_chem) is placed after DIURNAL_ADJ.
+In HINES97, the param k_alpha now =2.e-6 at all lats (lat dependence was probably 
+a tuning attempt by A. Smith).
+Trying to tune using rms_wind: although the mesopause gets warmer everywhere
+with rms_wind=1.5 and colder everywhere with rms_wind=2.5, it is not possible 
+to find a lat-distrib of rms_wind which would increase the lat grad of meso T.
+See mesopause.xls.
+Trying to tune using k_alpha: no useful results, the existing k_alpha = 2e-6
+(not lat-dep, the lat-dep found was probably by A.Smith) gives the biggest lat
+grad of meso T.
+Testing the old BC on w, wu=wd1 in DYN_WUP (wd1 calc in DYN_BVFREQ): does not 
+work, only the highest val of w is modified and nothing else (even with the
+setting of xu as well). In very old versions though (pre-v1.5), it did work.
+
+v5s09: HDIFF acts on noon values - WORKS
+----------------------------------------
+Didn't like HDIFF (on d.a.) followed by DIURNAL_ADJ (scaling to noon
+vals). calling HDIFF with qn2 at noon as inout dummy arg io qn2da, removing
+DIURNAL_ADJ. Results compared w/v5s08: small differences for T or chem distribs,
+but O3col decreases, eg at 50S. Notice PSC on seem to have bad effects.Testing mass conservation of tracer species x, which has molar mass of CO2.
+New function total_molec.f and subroutine CHECK_TOTAL_MOLEC in check.f, output 
+to fort.37 . Total nb of molec not conserved, especially when initial distrib
+has strong spatial grad. Testing transport processes: VDIFF_NEW and HDIFF 
+conserve well, SLT worse. 
+v5s09a: Adding fixer=nitot0/nitot1 in slt.f, with check & stop if fixer<0.98 
+or >1.02. 
+v509b: Dominique says there's no ClONO2 in at South Pole, that's bad, surely due
+to bad PSCs. Removing all PSC/PMC effects through socrates.inp . Main results
+compared w/v5s09a_3yr.heat.nc (limited archive): O3 col does not go down as much
+in southern polar spring, as expected.
+
+v5s10: relaxation of t2d to Tmsis below 30km - WORKS
+-----------------------------------------------------
+Tropopause was much too cold for a long time. Re-implementing pt0 and pt_relax
+in POTTEMP (as in v3cII51), now pt0 is pTmsis in MAIN. new control parameter
+use_Tmsis: in MAIN: if use_Tmsis=0 (default), pt_relax=0 (no relaxation);
+if use_Tmsis=1, pt_relax=1/86400 below 30km and linear connect to 0 at 40km;
+if use_Tmsis>1, pt_relax=1/86400 at all altitudes ie the model uses MSIS
+temperatures!!
+
+v5s11: switching off the transport by convection/front param - WORKS
+---------------------------------------------------------------------
+While testing mass conserv of tracer X with 300ppm at (45N,surf) and zero
+elsewhere, found that the chem solver IMP_SLV does change the val, although
+there are no prod/loss!! Reason: the param of transport by convection/front as
+chem prod/losses. This process is not conservative (check column of X). Using
+switch n8=0 to turn this param off, i.e. ALPHAMF and CONVECT are called only if
+n8==1. Results: X now changed only by HDIFF, VDIFF_NEW and SLT (ouf!), OH tropo
+profile much better. We'll keep n8=0.
+in PHO_STAM: replaced qn2da(O2) by qn2(O2). 
+in ATMCOND, Setting offline_batm will now set hm2d = Dmsis(tot).
+In DYN_MAIN, adding dkt to xkz so that it is used in VDIFF (for chem) as well as
+in POTTEMP. TRAJECT, TRAJBC, LE3 included in slt.f . 
+
+v5s12: new J, updating O(1D) chem scheme
+------------------------------------------
+Found out that NO and CO2 densities are not programmed anywhere in J code 
+(see ABSDEP). Removing their settings in PHO_STAM, setting maxden=4 i.o. 6 in 
+phot.mod.f. Cleaning read_save.f day_slicer_init.f, save.f and nc_read_init.f
+since CO2, NO are not special any more.
+J(HO2): the reaction was ready but set to 0 in SETPHT and not set in pho_stam.f.
+Using simple vals from JPL97 (table 9, p.156), adding crs(HO2) in new
+crs2001.dat. Updating setpht.f, pho_stam.f, increasing phtmax by 1 in
+phot.mod.f. Results: negligible effect compared w/v5s11 .
+Adding forgotten reaction O3+O(1D) -> O2+O+O (k=1.2e-10, JPL97 P.14) 
+Replacing CO2+hv -> CO+O(3P) by CO2 + hv -> CO + O(1D).
+Control run v5s12_20yr.small.nc with use_Tmsis=1, useless species X and Y.
+
+v5s13: studying the CO2 distrib
+-------------------------------
+All sims done with use_Tmsis=2 (MSIS Temp everywhere) and start with homogeneous
+CO2. Tracer X has molmass=44. We keep CO2+hv->CO+O(1D)
+
+v5s14: CO2 no moldiff w/interactive T
+-------------------------------------
+full CO2 photochem, use_Tmsis=1, CO2 has no moldiff
+Compare w/v5s10a: much more CO2 in MLT, already above 80 km - that's OK
+but surprisingly, IRcool_CO2get bigger only above 110km and T changes very 
+little
+
+v5s15: Ly-a solar flux changed - SLT crash after 18yr 
+-----------------------------------------------------
+data/solflux.dat: at iv=8, Ly-a flux was 4.88e11 changed to 
+4.75e11 = 0.5*(3e11+6.75e11) following solmin & solmax of Tobiska/et-al-1997
+Results w/ use_Tmsis=1: SLT fixer out of bound for Cl2O2 after 18 years
+
+v5s16: 10.5-year cycle of solar Lyman-a, fully interactive
+----------------------------------------------------------
+In main.f, sets solflux(8) at Ly-a using a SINUS fct, fit to tobiska.xls, period 
+is 10.5 years: 
+         solflux(8) = 1.e11 * ( 0.5*(6.75+3.) + 0.5*(6.75-3.)*
+     $                 SIN((REAL(time%days0)-722100.)*2.*pi/365./10.5) )
+Results w/ use_Tmsis=1: SLT fixer out of bound for Cl2O2 after 7 years. Effects
+of Ly-a solar cycle is not seen on T, CO2, O3, but is clear on OH at 80km
+
+v5s17: JPL2000 update
+---------------------
+Ly-a solar cycle of v5s16 used only if n9=1 (default n9=0). 
+The check on fixer value in slt.f is now species-dependent: the condition is 
+relaxed for species unimportant in MLT (as Cl2O2). 
+Deleted unused module DIV1 from dynam.mod.f .
+New param pmb0=1013.25 in module PHYS_CST (sim_cont.mod.f) .
+Implemented pmb in module ZGRID (dynam.mod.f), to be used everywhere.
+Preproc: reverting to CO+hv->CO+O(3P); updating JPL2000 reac rates.
+USRRXT : rid_a36 (CO+OH) uses patm=pmb/pmb0 ; rid_hk2 (O+O2+M) and rid_b27
+(OH+HNO3) are JPL2000 updated.
+CRSCOR: minor corrections, and qy_o3 param re-done following JPL2000.
+3-years run: works well, no important difference w/ v5s15
+
+v5s18: replacing J(CO2)->CO+O(3P) by CO+O(1D)
+---------------------------------------------
+No important diff w/v5s17
+
+v5s19: adding reaction rid_c3: CO+O+M->CO2+M, Ly-a cycle fails
+--------------------------------------------------------------
+Using badly referenced reac rate k=6.6e-33exp(-1103/T), Solomon/et-al-1985 .
+No important reldiff w/v5s18. Notice CO-noon and CO-night almost equal.
+v5s19 25-year run successful (small arch). 
+v5s19a: with Ly-a 10.5-year cycle (n9=1), small arch. CRASH after 7 year, 
+in 2002, shortly after solmax. Probable cause: lots of chem species get bad, 
+especially O3 disappears in upper strato -> O3 solheat much too low -> bad 
+strato temp etc...
+v5s19b: use_Tmsis=2, no SLT fixer, offline_batm=.true., full arch. Does not
+crash (using Tmsis), but still O3 gets too small above 40km. Notice how HCl
+gets too high by 2 orders of magnitude, peak at 75km, midlat summer solstice.
+
+v5s20: chem solver diags and tunability
+---------------------------------------
+Hypothesis: v5s19a crash caused by lack of HCL convergence in chem solver
+IMP_SLV. Modifying preproc/in/imp_slv.F to display sim date of non-convergence.
+preproc/in/imp_slv.F began with module IMP_SLV0 where parameter itermax=12.
+itermax replaced by var chem_itermax in module SIM_CONTROLS
+(src/sim_cont.mod.f). Default value is still 12, but can be modified in input
+namelist control_parms. Result with chem_itermax=24 and otherwise same as v5s19b
+(Ly-a sin cycle): HCl still too high but much less crazy!! So chem_itermax
+indeed reponsible
+
+v5s21: New switches system, now archived; extended solcycle abilities
+---------------------------------------------------------------------
+Revamped the switches system, see switches.txt. 
+Added new solcycles.f (mlt_sw(6). 3 possibilities with u_hwm (mainsw(3)).
+NETCDF_MULTITEXT added in nf_utils.mod.f to archive the description file.
+describe_sim.f totally changed, now calcs the string array desc_text.
+v5s21_3yr.arch.nc: switches for run similar to v5s19_3yr.arch.nc, OK, results
+almost identical. Testing importance of chem_itermax, look at time evolution of
+HCl vmr at 74km, 55degN. 
+v5s21:  chem_itermax=12, nocvg file has 3.43Mb, CPU time=34535s, HCl *very* bad
+v5s21a: same as v5s21 but chem_itermax=24, nocvg file has 1.42Mb, 
+        CPU time=34742s, HCl *much* better than v5s21
+v5s21b: same as v5s21 but chem_itermax=48, nocvg file has 1.35Mb, 
+        CPU time=35050s, HCl very slightly better than v5s21a
+v5s21c: mlt_sw(6)=2->Ly-a flux at solmax, chem_itermax=48, 
+        nocvg file has 3.45Mb, CPU time=35890s, 
+        HCl bad but much better than v5s19b. 
+        NOTICE: time evolution of O(1D) at 74km, 55°N bad too!
+v5s21d: mlt_sw(6)=2->Ly-a flux at solmax, chem_itermax=96,
+        nocvg file has 3.41Mb, CPU time=37045s, results same as v5s21c
+CONCLUSION: increasing chem_itermax has almost no effect on run time, 
+best value is 48.
+v5s21e: since O(1D) looks bad when Ly-a flux at solmax, archive J (ie tjlat) 
+        for O3->O1d, O2->O1D, CFC113 (only Cl species to get photolysed at Ly-a)
+        and HCl. Just to check, chem_itermax=192. Results same as v5s21c and
+        v5s21d. J *output* is not zero in polar night. Elsewhere, the J's look
+        normal.
+NOTICE: 1st trial of v5s21e with chem_itermax=191 showed very bad vals of HCl at
+        74km, equator at beginning of run. Probably the HCl looks bad at odd
+        values of chem_iter and "good" at even values of chem_iter.
+Conclusions from v5s21-v5s21e: Two species have convergence problems at 74km: 
+HCl and O(1D). 
+HCl has problems for both for Ly-a solflux = avg and Ly-a solflux = max. 
+When Ly-a solflux = avg, this problem seems fixed by increasing chem_itermax
+from 12 to 48 (even values!). When Ly-a solflux = max, problem can not be fixed,
+and it appears that HCl oscillates between bad values (at odd chem_iters) and
+less bad values (at even chem_iters). This can be seen from beginning of run.
+O(1D) has problems only when Ly-a solflux = max, and it should be easier to find
+the chem cause but numerically, it shows only at 55N after 9 months of run.
+
+v5s22: fixed bug on J archive, diags in IMP_SLV, CHEM SOLVER temporary fix - WORKS
+----------------------------------------------------------------------------------
+tjlat in plar night set to zero in SOL_DAY (was done later in SETPHT but didn't
+show in archive). sunrise happens in CHEMDR when going from ilon=6 to ilon=7.
+In CHEMDR, sunrise=.true. which divides tstep in 4 sub_tstep happened for
+ilon=6. Now (v5s22) sunrise=.true. for ilon=7, as it should.
+Sunrise condition changed in CHEMDR. SETPHT has problems, tried to fix as 
+follows: when getting logj1 at sunset and logj0 at sunrise, v5s21e used respectively 
+tjlat(kidn(t1)) and tjlat(kidn(t0)); v5s22a uses tjlat(kidn(t0)) and tjlat(kidn(t0)).
+Made sure that whatever happens, sunrise and sunset use tjlat(ki=2), or stop 'SETPHT:
+programming error'.
+v5s22_3yr.arch.nc: Input identical to v5s21c. Results: perfect, HCl and O(1D) look great now. 
+Mesopause T slightly warmer. O3 profiles in polar regions and close to terminator are 
+different (v5s22 produces more strato O3). The ozone column is even bigger (which is bad).
+v5s22a: New subroutine DIAGS_IMP_SLV in new file diags_chem.f, results identical to v5s22.
+
+v5s23: new switches mlt_sw(7:8)
+-------------------------------
+mlt_sw(7) has valrange 0->3, default value 1, for Solar cycle for non-Ly-a wl: 
+0-minval, 1-avg, 2-maxval, 3-sin cycle
+mlt_sw(8) has valrange 0->3, default value 1, for Solcycle on F107 in MSIS & HWM: 
+0-minval, 1-avg, 2-maxval, 3-sin cycle
+f107 now local var in main.f, passed as dummy arg to solcycles.f and msis_hwm_plug.f 
+describe_sim.f reflects these changes. New v5s22a in IMP_SLV (preprocessed.f)
+put in preproc/in/vector/IMP_SLV.F .CHEMDR and SETPHT modified for diags. 
+v5s23_test, same input as v5s22a_3yr: results identical.
+v5s23_30yr: setting full 11-year solcycle effects (mlt_sw(6:8)=3); ATMCOND calculated
+interactively.
+Found out that tstep, sub_tsteps scheme in CHEMDR makes no sense. 
+Developing v6s01.
+
+
+To-do list
+----------
+- check NC_READ_INIT: CO2 initial distrib is flat!
+- Update the preproc/in/vector/imp_slv.F to reflect changes in preprocessed.f
+- re-Test importance of Ly-a param on CO2 distrib
+- Test some more conservation of total H (must include UB fluxes)
+- re-activate n10: ionic prod of NOy in MLT

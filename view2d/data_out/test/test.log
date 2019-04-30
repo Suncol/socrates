@@ -1,0 +1,132 @@
+SOCRATES starts on 
+Sat Apr 20 03:48:36 CST 2019
+=====================================================================================
+
+ ----------------------------------------------------
+  
+ label_short= test
+ label_long= socrates7.18.1
+ model_type= two_d : sim performs full 2-D calculations
+ start_from= newnc : sim will start from netCDF file...
+ rstrt_filespec= ./data_in/v7s11_1996-12-17.save.nc
+ Simulation start date = 12/17/2003
+ Simulation stop date  =  1/ 3/2005
+ -> Simulation duration   =    382 days
+ 
+ dyn_steps=  24 (per day) iters of dyn-T loop
+ debug= T : detection of errors aborts simulation
+ chem_itermax=   12 is max nb of iter for chem solver
+ chemdtm=   5.0 (minutes) is timestep for chem solver
+ mainsw(1)=  0 : sim has interactive calculation of T
+ mainsw(2)=  0 : ATMCOND uses interactive vals for O,O2,T,n
+ mainsw(3)=  1 : sim uses HWM u to calc interactive u
+ mainsw(4)=  1 : sim has Kzz by Hines (using HWM) & "arbitrary" GW drag
+ mainsw(5)=  2 :  PW param is coupled wave model
+ mainsw(6)=  2 : simulation has Chemical Heating
+ mainsw(7)=  0 : sim has NO transport by conv/fronts
+ mainsw(8)=  0 : sim has NO Quasi Biennal Oscillation
+ mainsw(9)=  1 : Solar flux by Lean et al. (1997,122-417nm)
+ mainsw(10)=  0 : LBC on CHI is SIN_VAR(month) of some fct
+ mainsw(11)=  0 :PHO_CHEM interpolated from TABLES_PHO...
+ ... which is calc every daypas=  5 days
+ mlt_sw(1)=  1 : simulation has molecular viscous damping
+ mlt_sw(2)=  0 : simulation has NO tidal wave breaking
+ mlt_sw(3)=  1 : Simulation has thermal conductivity
+ mlt_sw(4)=  2 : prod of NO by lightning+cosmic rays + soft X-rays + aurorae
+ mlt_sw(5)=  1 : Simulation uses Lyman-a param
+ mlt_sw(6)=  3 : Solar activity follows daily SOLAR2000 (in 19470214-20020731, e
+ l
+ mlt_sw(7)=  1 : E10.7 proxy depends on mlt_sw(6)
+ mlt_sw(8)=  1 : non-Lya solar flux depends on mlt_sw(6)
+ mlt_sw(9)=  1 : Lya solar flux depends on mlt_sw(6)
+ mlt_sw(10)=  1: Special prods & flxub for MLT NO depend on mlt_sw(4,6)
+ het_sw(7)=  0 : Simulation has NO aerosol effect on J and solar heating calc
+ het_sw(8)=  1 : Simulation has washout of soluble species
+ gcc_sw(1)=  1 : IC for CO2,CH4,H2O adjusted by initial TRENDS_BOUNDY
+ gcc_sw(2)=  1 : LBC for CO2 follows TRENDS_BOUNDY
+ gcc_sw(3)=  1 : LBC for CH4 follows TRENDS_BOUNDY
+ gcc_sw(4)=  1 : IBC for H2O follows TRENDS_BOUNDY
+ Filenames of active output archives (netCDF):
+ "./data_out/test/test.heat.nc"
+ "./data_out/test/test.chem.nc"
+ "./data_out/test/test.save.nc"
+ "./data_out/test/test.ma.nc"
+ "                                 15.nc"
+ "                                 15.nc"
+ "                                 15.nc"
+ ...and other "dvout" archive(s)
+ ----------------------------------------------------
+ NetCDF library version 
+ 4.6.1 of Feb 20 2019 13:12:21 $                                                
+  
+ 
+ READ_SAVE: Start time and save time do not match !
+     Start time = 12/17/2003
+     Save  time = 12/17/1996
+ READ_SAVE: simulation continues nonetheless
+ 
+heat  archive to ./data_out/test/test.heat.nc , date= 12/17/2003
+chem  archive to ./data_out/test/test.chem.nc , date= 12/17/2003
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/17/2003 ; t2d=  261.852 ; q=   -0.000
+ CHEM BEGINS,date=   12/  17/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.068E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/18/2003 ; t2d=  261.567 ; q=   -0.000
+ CHEM BEGINS,date=   12/  18/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.059E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/19/2003 ; t2d=  261.524 ; q=   -0.000
+ CHEM BEGINS,date=   12/  19/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.059E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/20/2003 ; t2d=  261.515 ; q=   -0.000
+ CHEM BEGINS,date=   12/  20/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.059E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/21/2003 ; t2d=  261.507 ; q=   -0.000
+ CHEM BEGINS,date=   12/  21/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.059E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/22/2003 ; t2d=  261.450 ; q=   -0.000
+ CHEM BEGINS,date=   12/  22/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.060E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/23/2003 ; t2d=  261.331 ; q=   -0.000
+ CHEM BEGINS,date=   12/  23/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.060E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/24/2003 ; t2d=  261.165 ; q=   -0.000
+ CHEM BEGINS,date=   12/  24/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.062E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/25/2003 ; t2d=  260.973 ; q=   -0.000
+ CHEM BEGINS,date=   12/  25/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.065E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/26/2003 ; t2d=  260.793 ; q=   -0.000
+ CHEM BEGINS,date=   12/  26/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.067E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/27/2003 ; t2d=  260.603 ; q=   -0.000
+ CHEM BEGINS,date=   12/  27/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.070E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/28/2003 ; t2d=  260.414 ; q=   -0.000
+ CHEM BEGINS,date=   12/  28/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.073E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/29/2003 ; t2d=  260.231 ; q=   -0.000
+ CHEM BEGINS,date=   12/  29/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.075E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/30/2003 ; t2d=  260.055 ; q=   -0.000
+ CHEM BEGINS,date=   12/  30/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.078E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=  12/31/2003 ; t2d=  259.871 ; q=   -0.000
+ CHEM BEGINS,date=   12/  31/2003 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.080E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=   1/ 1/2004 ; t2d=  259.678 ; q=   -0.000
+ CHEM BEGINS,date=    1/   1/2004 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.083E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=   1/ 2/2004 ; t2d=  259.437 ; q=   -0.000
+ CHEM BEGINS,date=    1/   2/2004 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.087E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=   1/ 3/2004 ; t2d=  259.202 ; q=   -0.000
+ CHEM BEGINS,date=    1/   3/2004 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.090E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=   1/ 4/2004 ; t2d=  258.972 ; q=   -0.000
+ CHEM BEGINS,date=    1/   4/2004 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.093E-06
+--------------------------------------------------
+MAIN  @ ( 28, 56) : date=   1/ 5/2004 ; t2d=  258.745 ; q=   -0.000
+ CHEM BEGINS,date=    1/   5/2004 ; @(  28,  56) & slt= 12.08333:  vmr(O3)=    1.096E-06
+
+=====================================================================================
+SOCRATES finished on 

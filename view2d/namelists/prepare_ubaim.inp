@@ -1,0 +1,27 @@
+ &control_parms
+ model_type = 'two_d'
+ start_from = 'newnc'
+ sim_start_time = 1975, 12, 17, 0, 0.
+ sim_stop_time  = 1984, 10, 28, 0, 0.
+ ncpus = 4
+ daypas = 5
+ chemdtm = 60.
+ mainsw(1) = 1               ! MSIS T from surf to 30km
+ mlt_sw(6) = 2               ! SIN cycle for solar activity
+ gcc_sw(1:4) = 1, 1, 1, 1    ! LBC follows simulation year
+/
+ &io_parms
+ data_dir = './data/'
+ rstrt_filespec = '/home/simonc/socrates/saved/v7s11_1996-12-17.save.nc'
+ arch_dir = '/home/simonc/scratch/'
+ label_short = 'v7s11u2'
+ label_long = 'SOLVAR,LBCvar,TMSIS0-30km'
+!
+ arch_set(1)  =  'heat', 1974,  1,  1, 0,0.,  1996,  3, 21, 0,0., 30
+ arch_set(2)  =  'save', 1984,  9, 21, 0,0.,  1996, 10, 8, 0,0.,  0
+/
+ &diag_parms
+ diags = .false.
+ ldiag = 2
+ zdiag = 81
+/

@@ -1,0 +1,289 @@
+Hello everyone !
+
+This series of e-mails describe my new version of the 2d-model before
+my departure to Belgium. The source code is available to the group in
+acd:/u/simonc/2dv5b/src
+
+The results show still a serious problem : progressive depletion of ozone
+(at all latitudes) below 30km, with the amount of total ozone decreasing
+accordingly. This could be caused by a continuous increase of ho2 below 30km
+(see e-mail on chemistry modifications).
+I simply do not have the time to fix this before my departure.
+
+This mail lists the new and modified files. The next one explains the
+modifications of the chemistry. There will be another one for the
+modifications in transport and diffusion, and the last one explains the other
+modifications, and the work still not done.
+
+NEW AND MODIFIED FILES
+----------------------
+
+The modules are as usual located in the subdirectory src/modules
+There are 2 new module files : chem_xface.f and chem_rates.mods.f
+5 modified module files : module.f , main.mod.f , def_names.f , main.xface.f
+and pho_xface.f
+
+The following files are new subroutines extracted from chembox.f :
+calc_chem_rates.f
+chem_aero.f
+chem_prpe_day.f
+chem_prpe_night.f
+chem_psc.f
+day_sub.f
+
+The subroutine BOUNDY has been extracted from file asg.f and is now in its
+own file boundy.f . The lower boundaries fluxes for c2h4 and c3h6 have been 
+corrected (Theresa's mail 7/11/96) and I have programmed explicit boundary 
+conditions for the short-lived species (see mail on transport and diffusion).
+
+Other new files : atmcond.f
+		  diuvarch.f
+		  families.f
+		  
+The following subroutines have been modified to transport and diffuse
+the short-lived species individually :
+main.f
+moldiff.f
+diffus.v3.f -> diffus.v4.f
+slt.f
+diurnal_adj.f
+
+The following subroutines, part of the J's calculation, have been modified
+to use the geometric altitude grid (calculated in atmcond.f) :
+aerosol2.f
+minsch.f
+pho.f
+phodis.f
+
+Other modified files, with less important modifs :
+arch.f , asg.f , check_ctrls.f , chem_resol.f , chem_subs.f, const.f, utils.f
+
+The following files have been modified to include some of Theresa's work :
+adjh2o.f (Theresa's mail 9/19/96)
+chembox.f, chem_prpe_day.f and chem_prpe_night.f (Theresa's mail 9/18/96)
+main.f     |
+heat.f     |-> Theresa's mail 6/13/96 (calculation of w at upper boundary)
+balance.f  |
+washout.f (Theresa's mail 5/17/96)
+sol_chm_heat.f   | -> Theresa's mail 5/17/96 (I programmed it differently)
+sol_day.f        |
+Corrections for lower boundary temperature at 2km (Theresa's mail 2/12/96)
+
+Finally, Theresa's work which I have *not* included in my version :
+- larger nighttime timesteps (Theresa's mail 9/20/96)
+- random temperature perturbation for PSC's formation (Theresa's mail 5/10/96)
+- chemistry calculation for days 1, 3 and 5 (Theresa's mail 2/28/96)
+- Theresa seems to have a newer version of co2.f
+And in general, all Theresa's modifications relating to PSC and aerosols,
+since I always tested my version with no PSC and no aerosols.
+
+MODIFICATIONS OF THE CHEMISTRY
+------------------------------
+
+Here are the changes I made in the chemistry of the 2dmodel .
+
+I have extracted from chembox 7 subroutines. 2 new modules have been created :
+chem_xface.f and chem_rates.mods.f.
+chembox is now like a main to call the following subroutines :
+calc_chem_rates : calculates the temperature-dependent reaction rates.
+	The complete list of reactions is there.
+chem_psc : effect of the psc on chemistry. Note that Theresa's random 
+	fluctuation of temperature is *not* programmed
+chem_aero : effect of sulfate aerosols on chemistry
+day_sub : calculation of the short-lived species, based on PhotoChemical 
+	Equilibrium (PCE) partitioning ratios of the long-lived families.
+	The altitude-dependent partitioning of the new hox (h+oh+ho2) family
+	is there (see below)
+night_sub : this is still Stacy's code : it uses a Newton-Raphson scheme,
+	calculating and inverting the Jacobian matrix to integrate in time
+	o, o3, oh, ho2, no, no2, no3 and h. I modified Stacy's code, adding
+	some reactions *and* calculating no2 separately from no
+	(Stacy calculates nox as long-lived and implicitly uses no2=nox-no
+	in his version of night_sub). The three families ox, hox and nox
+	are not calculated at night, they're simply the sum of their members.
+	I tried to replace night_sub by a simplified
+	version of day_sub, with J's removed, and o1d, n, cl, br set to
+	0. This is faster, but the partitioning method developed for the members
+	of the hox family (see below) does not work well during night.
+chem_prpe_night : calculates chemical productions and losses of long-lived
+	and intermediate species during the night.
+chem_prpe_day : calculates chemical productions and losses of long-lived
+	and intermediate species during the day.
+chem_resol : not modified, still integrates in time the long-lived species by 
+	semi-implicit method and the intermediate species by HOV method.
+it_norm has been manually inlined into chembox.
+
+The main change in the science itself is the creation of a new family 
+hox = h + oh + ho2,  which has replaced h as a long-lived species with index 34.
+h is now a "short-lived" species with index 14. Several modules have been 
+modified, a new "trick" had to be programmed in the main for internal initial
+conditions, and the subroutines BOUNDY and ARCH were modified also.
+The calculation of hox, h, oh and ho2 uses 3 altitude regions :
+0-30km, 31-70km, 71-120km. hox is calculated only above 30km. Below 30km,
+hox is set to h+oh+ho2 in CHEM_BOX and its productions and losses in
+CHEM_PRPE_NIGHT and CHEM_PRPE_DAY are set to zero.
+The tough part was to partition this family. Here is the method I programmed
+in DAY_SUB :
+First we calculate r4 = h/oh from h PCE, between 0 and 70km. 
+
+Below 30km, oh and ho2 are in PCE and calculated directly from a quadratic 
+equation (Didier's method), then h = r4 * oh.
+This doest not seem to work right, because ho2 increases slowly but continously
+below 30km, which is a possible cause for the o3 decrease below 30km thet I have
+noticed in my last run. Furthermore, I notice several discontinuities below 30km
+of the ho2 number density in the polar night.
+
+Between 30 and 70km, we calculate r6 = ho2/oh from ho2 PCE. We then partition 
+the hox family, using r7 = oh/hox = 1 / (1+r4+r6) ; r8 = h/hox = r4*r7 and 
+r9 = ho2/hox = r6*r7 .
+
+Above 70km, we calculate r12=h/ho2 from ho2 PCE and r13=oh/ho2 from oh PCE.
+(note that h is NOT at PCE). We then partition the hox family, using
+r14 = ho2/hox = 1/(1+r12+r13) ; r15 = h/hox = r12*r14 and r16 = oh/hox = r13*r14
+
+The mesopause maximum of oh and ho2 is not as sharp as it was,
+except in the polar night where there is still a problem (much more limited
+in altitude and latitude).
+The method is generally conservative and converges well, except at sunrise.
+Note that this obliged me to recalculate h2o every time hox was calculated,
+even if h2o seemed to have converged. Before this last correction, h2o was 
+slowly but continuously increasing at every sunrise. Theresa found a similar
+problem for clox and cl2o2 (I included her correction in my version).
+This problem, of some species not converging while their reservoir-species
+seem to converge (and hence is not recalculated), could happen elsewhere.
+
+TRANSPORT AND DIFFUSION OF CHEMICAL SPECIES
+-------------------------------------------
+
+The concept of families does not hold everywhere between 0 and 120km.
+Until now, we were transporting and diffusing the families, and had
+to re-partition them afterwards. This created problems around the mesopause.
+My version transports (slt.f) and diffuses (diffus.v4.f) ALL the long-lived
+and short-lived species (I did not take care of the "intermediate-lived" species).
+The families are afterwards recalculated as the sum of their members (families.f).
+Actually, families are used only in the chemistry during daytime. Everywhere
+else in the model, they are just diagnostic values.
+
+Diffusion acting only once a day on diurnal averages, we still have a subroutine
+DIURNAL_ADJ (diurnal_adj.f) to adjust the noon values. 
+It now adjusts the short-lived species the same way than the long-lived species.
+The splitting noon ratios (qcratnoon) have been deleted from the code.
+
+The only real problem I had was to diffuse the short-lived species, since
+I needed boundary conditions for them. I took these boundary conditions from
+the ones prescribed for their families, considering that...
+Ox is O3 at 0km
+Ox is O(3P) at 120km
+NOx and NOy are NO at 120km
+I had to partition the fluxes of NOx at 0 km between NO and NO2 .
+I kept the flux prescribed for NOx (Hough, 1991), and I partitioned it following
+Muller and Brasseur (3D chemical transport model, JGR 1995, p.16461, fig.6)
+assuming that technological sources are a NO2 flux and soils and biomass burning
+are a NO flux. I did not take lightnings in account since they are parameterized
+separately in the 2d-model.
+You will find all these changes in the subroutine BOUNDY (new file boundy.f).
+Note the increase of the dimensions of the variables declared in modules
+BOUNDARIES and DEPVEL (module.f) . Note also it is useless now to prescribe
+a boundary condition for a family, since they are recalculated after diffusion.
+
+I have also modified the molecular diffusion (moldiff.f). 
+The subroutine MOLDIFF still calculates the variables xmz and wdif
+(passed now as dummy arguments - the module VEN11 has been deleted from 
+ main.mod.f). xmz and wdif are set to zero, and calculated only above 60km and
+only for species important in the mesosphere and thermosphere, including all the
+"short-lived" species. This calculation takes in account the use of a 
+log-pressure altitude grid instead of a geometrical grid.
+Note that in my version of the model, molecular diffusion HAS to be turned ON
+(default case). If the model is run with molecular diffusion off 
+(n7=0 in the namelist control_parms), O(3P) reaches a mixing ratio of 60% after
+20 days of simulation !
+The velocity term wdif in our calculation of the molecular diffusion seems to 
+correspond to a flux through the upper boundary. It could interact badly with
+some prescribed upper boundary conditions. I had to set the fluxes of H and H2
+at 120km to zero (boundy.f), although I found in the litterature they were
+of the order of 1.e8 molec/cm2/s . Using this last value as a boundary condition
+yields negative mixing ratios for H and H2.
+
+Finally, a tip to find problems with diffusion and transport of chemical species :
+look at their diurnal variations (easy with my new diurnal variation utility -
+see next e-mail). Since the chemicals are transported and diffused only once a day
+at noon, problems with transport and diffusion often show up on the diurnal cycle
+as a discontinuity at noon.
+
+OTHER MODIFICATIONS
+-------------------
+
+First of all, the model can now archive the diurnal variation of user-selected
+species at user-selected dates (diuvarch.f ; also check 
+acd:/u/simonc/2dv5b/21.2yr.job).
+Since this new archive can become huge, the user has to type a list of up to 
+30 chemical species to output, at up to 10 precise dates. 
+This is declared in the 'sim_controls' namelist (see 21.2yr.job). 
+The list of species names has to
+follow the order defined in the module def_names.f, skipping the undesired ones.
+The chosen species will be written 16 times (2 diurnal cycles) for each date
+defined in ran_diuvarch(1:10) (the selected date and the next day). 
+The latest version of my IDL viewer (directory 2dv5b/idl, run it typing 
+"archopen" at the IDL prompt) permits to visualize the diurnal cycle of any 
+species,at any latitude and altitude :
+With these new diurnal archives, it offers in the menu "Special" the option 
+"Time-value". Select it, then click on the location of the contour plot where
+you want to see the diurnal variation of the currently selected species.
+By default, it will show 2 diurnal cycles, to check if the diunal variation
+is periodic. If you then select "Zoom" (in the menu "Special") the diurnal
+variation plot will be restricted to 24 hours, showing the sunrise and sunset time.
+
+I have written a new subroutine ATMCOND (atmcond.f). It calculates the atmospheric
+density (hm2d) by hydrostatic adjustment (calculation removed from chem_subs.f).
+It also calculates the geometric altitude grid and the corresponding atmospheric
+scale heights : variables zgeo and Hair, declared in the new module ZGRID 
+(main.mod.f) to be available from everywhere in the model. 
+I have also created a new module BACKATM with constant vertical profiles of o2,
+n2 and mean molecular weight of the air, and tried to use these profiles
+consistently throughout the model.
+
+The code for the J's calculation uses these new features : column densities are
+now calculated from the geometrical altitude grid.
+
+Now, the results of this new version : the output of a 2-year simulation is 
+available on the mass-store :
+/SIMONC/MOD120/ARCHIVE/archive21.2yr.nc
+/SIMONC/MOD120/ARCHIVE/diuvarch21.2yr.nc
+The obvious problem is a progressive decrease of o3 below 30km, creating
+a "crazy" Dobson map. A possible cause is chemical : ho2 is slowly increasing
+below 30km. Maybe Theresa could try to fix this. It is my first priority
+when I return to Belgium.
+
+Other problems :
+The OH distribution in polar night still shows a huge peak (and increasing
+with time) at the mesopause.
+I think that it is caused by a numerical problem in the chemistry code.
+As a result, O3 vertical profiles in the polar night show a complete depletion
+at the same altitude.
+The hydrocarbons distributions are different than in the previous versions, 
+but I would not swear they're better. Note that the hydrocarbon chemistry 
+is still not consistent : it is not taken in account in NIGHT_SUB.
+
+On paiute, the CPU Computing time for these 2 years of simulation was 22.9 hours.
+I am now at 11.45 CPU hrs/year of simulation.
+I think that some time is still wasted in the chemistry calculations.
+The maximum process memory used was 10.1 MWords.
+
+Finally, some of my long-term projects for the model :
+- re-write the initial conditions of the model (I intend to create a data file
+with latitudinally-dependent mixing ratios for every species, with 9 latitudes
+and 24 altitudes, and interpolate at other latitudes and altitudes).
+- get rid of obsolete switches and unused parameterizations
+- Use the production of O(1D) by O2+hv->O(3P)+O(1D)
+- Add the excited species O2(1deltaG)
+- Calculate interactively the O2 mixing ratio in the thermosphere 
+(could be difficult with our current boundary at 120km).
+
+I hope to be able to do this in Belgium. Eventually, I will also try with
+Gaston Kockarts's help to raise the upper boundary to 200km. In this case,
+I will probably use an irregular altitude grid, with bigger altitude steps in
+the thermosphere.
+
+You can send me e-mail any time to my usual adress (simonc@acd.ucar.edu). It
+will be forwarded to Belgium. It seems I will be able to come again as a 
+visitor at some time this winter, for several weeks.

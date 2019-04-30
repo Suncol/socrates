@@ -1,0 +1,28 @@
+ &control_parms
+ model_type = 'two_d'
+ start_from = 'newnc'
+ sim_start_time = 1996,  8,  8, 0, 0.
+ sim_stop_time  = 1996,  8, 13, 0, 0.
+ ncpus = 1
+ daypas = 1
+ chemdtm = 5.
+ mainsw(1) = 2                   ! use Tmsis
+ mainsw(2) = 1                   ! use ntot by MSIS
+ mainsw(3) = 0                   ! use u_hwm
+ mainsw(11) = 2                  ! full J recalc at all chem tsteps
+/
+ &io_parms
+ data_dir = './data/'
+ rstrt_filespec = '/home/simonc/socrates/saved/v7s11_1996-8-8.save.nc'
+ arch_dir = '/data1/simonc/socrates/for_kazil/'
+ label_short = 'v7s11u'
+ label_long = 'input for UBAIM at SOLMIN'
+!
+ arch_set(1)  = 'dvout ', 1996, 8, 12, 0,0.,  2012, 10, 8, 0,0.,  0
+ arch_set(2)  =   'heat', 1996, 8,  8, 0,0.,  1996,  8, 14, 0,0.,  1
+/
+ &diag_parms
+ diags = .false.
+ ldiag = 2
+ zdiag = 81
+/

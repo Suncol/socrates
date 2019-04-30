@@ -1,0 +1,166 @@
+Version history for SOCRATES 2D model development - Simon Chabrillat
+____________________________________________________________________
+							
+base = "frozen" version 30si as developed in NCAR, may 1997
+Now using the csh script "newlong.csh" which automatically creates a compressed
+archive *.tar.Z corresponding to result files *.arch.nc, *.dvarch.nc, and
+*.save.nc. Development dates (dates when run was made) can be found easily in 
+compressed archives.
+
+Rev1 - FAILS UNLESS SOL3=0
+--------------------------
+Separated jo2 into jo2 and jo2_o1d in day_sub.f and prod_loss_day.f .
+Rewrote sol_chm_heat.f for full chem_heat formulation, standard xmixo2 use,
+and nlon-variable def of kipd, kipn, kidn .
+In chem_rates.mod.f, moved a7 to CHEM_RATES_HEAT .
+Check on unrealistic temperatures added in main.f .
+Results: arch_rev1_nomoldiff.nc : crazy temperatures after 19 months of sim.
+Due to chem_heat, as shown by Rev1nomoldiff_nosol3.arch.nc which works .
+All next runs in the Rev? series made with chem_heat=sol3=0 .
+
+Rev2 - FAILS
+------------
+Corrected bug in moldiff.f (return instead of cycle) - moldiff used from now on.
+Compressed source lost. Still, keeping Rev2.arch.nc and Rev2_nomoldiff.arch.nc 
+to show difference. Results : Rev2.arch.nc fails due to chem_heat, 
+Rev2_nomoldiff works even with chem_heat ON .
+
+Rev2a - WORKS
+-------------
+The 2 big 5-day loops (one for thermodyn other for photochem) are merged:
+- sol_chm_heat.f split into chem_heat.f and sol_heat_rates.f 
+- main.f flow modified
+boundy.f : flxub(h,h2) set to zero.
+Results: 2yrs work, even though e.g. qc(o3p)>1, with chem_heat ON
+(do not thrust Rev2a.inp with n6=0 : n6 non existent in main.f)
+
+
+Rev2b - FAILS
+-------------
+boundy.f : flxub(h,h2) set to 1.e8 again, but flxub(o3p) set to zero.
+Switch n6 to control chem_heat introduced. Initialization of O3, O3P, NO when
+nlon>8 corrected in main.f (but BUG with qc(co2)). moldiff.f made clearer.
+sol_day.f enhanced for nlon-variable def of kipd, kipn, kidn .
+module.mod.f has nlon-variable def of nd, nn.
+Results: chem_heat=0 but Fails after 18 months due to qn2(h2o) too big 
+for CHRCMS . Actually qn2(h2o) reaches 24. at ilat=1, iz=niz !!
+A run with nlon=24 seems to help to keep h2o OK but was not long enough.
+
+Rev2c - FAILS
+-------------
+diffus_vert.f and chemdr.f modified to call DIFFUS_VERT ndiffsubsteps=100 times
+inside its own loop, with a timestep 100 times smaller. Done 'cause suspected
+timestep for vert diff too big at upper limit.
+Results: fails as Rev2b, qn2da(h2o) reaches 14.
+
+Rev2d - FAILS
+-------------
+Introduced n8, n9 to control flxub(H&H2,O(3P)) - changes in boundy.f and main.f
+arch.f modified for reduced output. def_names.mod.f more explicit.
+1st introduction of O2 calculation: 
+O2 is calculated but doesn't interact on other species
+- ic_o2 index in module.mod.f, nbcon2_max raised
+- m.r. upper boundary condition in boundy.f
+- incomplete prod and loss calculation in prod_loss_*.f
+Resut: diagnostic O2 goes down to 4% at u.b., qn2(h2o) still > 1, fails as Rev2b
+Run made with flxub(h,h2,o3p) nominally set and chem_heat=0 .
+
+Rev3 - FAILS
+------------
+Calculated O2 is now part of chemical couplings : 2 lines in chemdr.f changed.
+Results: same as Rev2d. Rev3_nlon24 yields qn2(h2o)<0 everywhere but
+qn2(h2o)=0.14 in winter mesopause. Rev3_nlon24 aborted externally.
+
+Rev3a - WORKS PARTLY
+--------------------
+File chemdr.f: O2 and Ox added to "tightly coupled" list hox, h2o and h2o2.
+File it_conserv.f scales all m.r. for sum=1 - hm2d updated in chemdr.f .
+Prod and loss of O2 in prod_loss* completed.
+Constant profile of Ar specified in module BACKATM (main.mod.f) .
+Result : seems to work, O2 starts at 80km to go down to 8% at 121km, but goes 
+down from 21% to 20.3% in lowest 5km, equator. Run aborted externally.
+
+Rev3b - WORKS
+-------------
+Result of O2 calculation used only above izme = 72 in chemdr.f .
+Below that, qn2(t1,lat,1:izme,ic_o2) = xmixo2(1:izme) after call CHEM_SOL .
+CH4 added to "tightly coupled" list O2, Ox, hox, h2o and h2o2.
+Scaling for sum=1. in it_conserv.f now done only above izme.
+Prod and loss of O2 in prod_loss* even more completed.
+Very good results - 10-year long run successfully completed with flux upper
+boundary conditions but no chemical heating. Only problem: complete depletion
+of O(3P) and H in top 5 km (using nominal flxub).
+
+Rev4 - FAILS
+------------
+Quick attempt to integrate msis.mod.f and to use it, especially for N2 m.r.
+A bunch of checking MSIS vals agains SOCRATES vals. Never worked and didn't take
+the time to find out why.
+
+Rev5 - FAILS
+------------
+Made during march 1998 stay at NCAR. Rev5 is an attempt to take Rev3b, and add
+it all improvements from Rev_stacy_x (Stacy's version '_x' at the time of the
+visit, included especially chem lat scan from equator to poles). Could never get
+it to work. Rev5_stacy_ic.*.nc (from Stacy_x initcond) shows t2d>570K at 110km,
+polar night. The series Rev5-1 to Rev5-6 removed more and more of Stacy's new
+features, trying to find out where the problem was coming from. I gave up on
+Rev5.
+
+Rev6 - FAILS
+------------
+Is Rev_stacy_x with the two separate 5 days loops for thermodynamics and 
+chemistry merged into one, exactly as in diff.Rev1.Rev2a .
+Result is bad: heating pch bigger for all alts, T gets much bigger
+-> stop in routine CHRCMS because input stratospheric temperature 
+(ilat=1,3; iz=41,47) are > 350K ie out of range. Crashes for sim. date 
+12/27/1995, sim start date is 10/3/1995.
+Chem hating is on as in Rev_stacy_x.
+Bad heating doesn't come from chemistry since chem results for Rev_stacy_x
+(which works) and Rev6 are very close for O(3P), O3, H, and CO2 (although CO2 
+above 75 km slightly bigger in Rev6, but strato temps are wrong as well).
+
+Rev6a - FAILS
+-------------
+file co2.f changed to rev_huangt35 version (see huangt email feb 20 1998).
+Cefficient alpha in routine HEACOO was set to 0.6 between 55 and 94km
+(see huangt email oct 23 1997). Since old value of 0.25 worked fine in all my
+one-loop versions, alpha in HEACOO set to 0.25 again. Still fails identically.
+Theory : It is not possible to have chem_heat ON and only 1 5-days loop with
+chem_heat updated every day. Ways to check:
+- try Rev6a with chem_heat OFF -> still FAILS on 12/27/1997! -> chem_heat not
+responsible... Why is it that pch not zero in polar night, even though 
+chem_heat = srheat3 = 0. ??? Why is pch bigger in polar day, which causes 
+the crash? Check at ilat=1,iz=46
+
+Rev6b - FAILS
+-------------
+srheat1 bigger in rev6a. srheat1 <- sol1 <- sol_heat2
+sol_heat2 calculated by pho.f is different for unknown reasons.
+Even tried with pho.f called every day (photo_rates = .true. in main).
+Crashes exactly the same way. TIP: T discontinuity between 52 and 57km!!
+I give up on Rev6 and trying to merge the two 5-days loop, although I 
+succedeed doing it from Rev1 to Rev2a. I will now work on Theresa's final
+release, called v1.0 .
+
+
+To do list, science:
+____________________
+- look for cause of O2 low values at 110km, winter hemisphere
+- Enhance chem_heat formulation as in Rev3b
+- Replace xmix2/xmixo2 by qc(o2) in all non-chem routines, but with a routine
+  name switch to revert to xmixo2 use.
+- Try fluxes at u.b.
+- Set w to zero at u.b., with consistent correction of v (look at my emails)
+- Make u.b.c. diurnal time-dependent
+- Try again to merge the two 5 day-loop in one (see Rev6).
+
+To do list, programming:
+________________________
+- make nlon increasable again
+- create the CHECK_VALS subroutine, with a derived-type arg
+  (lmin,lmax,izmin,izmax,varname,minval,maxval,callproc,loc). It will check 
+  t2d, scale, O2, O(3P), q, w, O3 in CHRCMS.
+- Program O2 in chemdr.f really as other vars (use index o2, not ic_o2 !)
+- Use MSIS for m.r. of all non-calculated species + O2
+- remove all useless XFACE modules, merge small files.

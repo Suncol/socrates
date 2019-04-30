@@ -1,0 +1,328 @@
+              SOCRATES Version history from 28 February 2002
+              ----------------------------------------------
+
+Development based on v6s38, see myversions_v6.txt
+Major difference with v6s is the new wrapper for the chem solver, chem.f, 
+where the solar time loop is external and the lat loop is internal.
+Thus, advection & hor diffusion are applied at every chem tstep.
+All extra timesteps at sunrise & sunset have been removed.
+Change comes from Jan Kazil's needs, will bring two major progresses:
+- not discontinuity at noon (where advect & hdiff happened) 
+- possibility to implement altitude-dependent terminator
+Other advantage: parallelization on latitudes becomes easy.
+
+v7s01: 1st, simple implementation - WORKS
+-----------------------------------------
+Nice results, seem even better than v6s38. Notice terminator is still altitude
+independent (night when SZA>95, as in v6s series). v7s01a: chemdtm=5 .
+
+v7s02: tried to implement alt-dep terminator - FAILS
+----------------------------------------------------
+Using the new sun_utils.mod.f where night test depends on altitude.
+The most sophisticated routine there is SUN_DAYLENGTH.
+The tables for the J's are now computed in TABLES_SUN (was SUN_POSITION) and 
+TABLES_PHO (was SOL_DAY) which calls PLUG_PHO (was PHO_STAM). PHODIS renamed PHO.
+The J's were calculated at ki=1:noon, ki=3:lowest visible sun 
+(i.e. sunrise/sunset, *or* midnight if we are in polar day) 
+and ki=2: intermediate (linear interp of SZA) sun position.
+Problem: some of the SZA really encountered in the chem loop fall slightly
+outside of this grid, interp fails.
+
+v7s03: implemented alt-dep terminator - WORKS but...
+----------------------------------------------------
+The grid calulated in TABLES_SUN now has 6 points, with J's calc at 4 points;
+noon, lowest sun and 2 intermediate points (interp based on cos_h as in 
+SUN_POSITION v6s series). Added 2 extended points on both sides, with same 
+J vals as the noon and lowsun points. Was obliged to replace SPLINE interp
+in SETPHT by linear INTERP. This fixes v7s02 problem, but the J's 
+remain strangely constant when approaching sunrise/sunset.
+Notice strange lat dependency for O3 at 70km.
+SETPHT has a bug for prod_no: includes phve_no even when not sunlight(iz)
+
+v7s04: can calc J's at ALL chem tsteps ; sunlight-aware PHO scheme ; WORKS
+--------------------------------------------------------------------------
+Extracted definition of *diag vars from SIM_CONTROLS to new DIAG_CONTROLS.
+SETPHT split between SUN_CHEM & INTERP_PHO_CHEM, which is called by default 
+(mainsw(11)=0) from CHEMDR. Created new routine PHO_CHEM: if mainsw(11)/=0 , 
+CHEM does not call TABLES_PHO and CHEMDR calls PHO_CHEM instead of 
+INTERP_PHO_CHEM. Calc of psh moved from HEAT_RATES to *PHO_CHEM. 
+PLUG_PHO now takes vmr as input, allowing to use PHO_CHEM with diurnally varying
+concentrations (if mainsw(11)=2).
+v7s04:  mainsw(11)=0: using INTERP_PHO_CHEM, results identical to v7s03 except 
+        bug fix for phve_no -> mesospheric O3 in polar night reverts to v7s01
+v7s04a: mainsw(11)=1: using PHO_CHEM which calls PLUG_PHO using qn2noon 
+        (as was always the case from v6s01 to v7s04), results
+v7s04b: mainsw(11)=2: using PHO_CHEM which calls PLUG_PHO using diuvar vmr,
+        results OK
+v7s04c: the PHO scheme is made aware of level downto which sunlight penetrates: 
+        PLUG_PHO has now logical, intent(in) :: sunlight(niz) -> calcs 'levlo',
+        no calc is made below levlo in pho*.f . As of now, this can work only
+        with  mainsw(11)=2 since TABLES_PHO is not updated. 
+        v7s04c*dvout*.nc (uses MSIS T) given to J. Kazil for his thesis.
+v7s04s: same as v7s04c but simulation at SOLMAX for Jan Kazil (uses MSIS T).
+
+v7s05: new BOUNDY* and VDIFF* ; WORKS
+-------------------------------------
+Fixed several bugs in TABLES_PHO (v7s04 could use only PHO_CHEM). 
+Re-designed boundary conditions and VDIFF (renamed from VDIFF_NEW): it is now 
+possible to specify one intermediate boundary condition (BC), solving vert 
+diffusion is done in VDIFF_SOLVE contained in vdiff.f . 
+When there is an intermediate BC, VDIFF_SOLVE is called twice. Goal is to be 
+able to set H2O at z*=17km from UARS climato as an intermidate BC (see v7s07).
+This version is only preparatory work. All BC are specified as new var type 
+BOUNDY_COND (see module BOUNDARIES, file chem.mod.f). BOUNDY split into 
+BOUNDY_INIT and BOUNDY_TDEP, BC can still be further modified in ANTHRO_CHANGE
+and SPECIAL_NO_PROD .All routines using module BOUNDARIES, including IMP_SLV 
+(preprocessed.f !), were updated. The physics of the model was not changed.
+Only diff with v7s04 (apart from TABLES_PHO fix) is that BOUNDY_TDEP called 
+with latest t2d field. Works fine.
+
+v7s06: OpenMP parallelisation of CHEM - WORKS BUT...
+----------------------------------------------------
+Added OpenMP directives in chem.f . All compil with new option -omp.
+Had to re-write all initializations and to remove "save" attributes in 
+parallelized code -> PHO code changed a lot. sun_utils.mod.f was simplified,
+removing the last_* saved variables. Beware! All declaration statements with 
+initializations, as in      real, dimension(121,56) :: base_dens = 0.
+Implcitly add the "save" attribute to the var which becomes SHARED across CPU
+-> init had to be removed from all such statements.
+Notice IMP_SLV extracted from preprocessed.f and heavily modified: 
+THE PREPROCESSOR IS NOT UP-TO-DATE.
+Results: works, but the results depend slightly on the nb of CPUs (e.g., set to
+5 by shell command   $> export OMP_NUM_THREADS=5
+See readme/notes/omp_performance.txt: run time decreased from 82 s/day at 1CPU
+to 53 s/day at 5CPU, uselles to use more CPUs.
+The difference between 1 CPU and 5 CPU (which should be zero) is best seen in 
+o3-noon: -6% after 5 days of sim, 3% after 10 days of simulation.
+Notice wrong 'write' to fort.1 & fort.19 in imp_slv.f -> all CPUtime-related 
+diags are wrong
+
+v7s07: Intermediate BC for H2O at z*=17km from UARS climato - WORKS !!
+----------------------------------------------------------------------
+Implemented in module BOUNDARIES (chem.mod.f), routines BOUNDY_INIT (now
+read data/h2o_uarsclim_17km.dat) and BOUNDY_TDEP .
+Fixed bug when calling TRIDLA from VDIFF_SOLVE . Fixed bug in PHO_CHEM.
+Results: excellent! After 8 year of transient, strato H2O decreses by 1 ppm and
+gets much closer to UARS climato. 
+Differences between v7s07 (1CPU) and v7s07a (5CPU): fix levels 
+between -0.4 and 0.2% - notice 3 different types of differences:
+1) isolated, random gridpoints 2) Well-defined mesospheric region, out of poles
+3) Polar night in NH (no diff in SH !!)
+Ported to qbrick.oma.be, works well (for 1-day sim, output not checked), 
+parallelization more scalable than on aeolos.
+v7s07b: 1-year High-res sim (chemdtm=5.), starts with v7s07_2017-3-21.save.nc 
+but sim years from 1994 (checking dates in read_save.f relaxed). 
+Saving new standard restart file: v7s07b_1995-3-21.save.nc
+Notices on the slow, precise mode mainsw(11)=2 (interactive J calc): 
+this generates stack overflow when running on several CPUs. One must set the
+env var MP_STACK_SIZE to some val >= 20million (does not work at 10million), e.g.
+> export MP_STACK_SIZE=30000000 . This mode is unreliable anyway:
+v7s07c: chemdtm=5., mainsw(11)=2, results are *very* different from v7s07a!! 
+Almost no tertiary ozone maximum!! Totally irregular latitude plot of OH at 78km,
+like O3 since v7s03, but much worse. There *must* be a bug when mainsw(11)=2 .
+CHECK: time dependence of H2O at -80 and -85S seems wrong: continuous change 
+in July, Aug and Sept - probable reason: ibc not implemented in 
+ADVECT_CHEM and HDIFF .
+
+v7s08: Speed & parallelization optimizations - WORKS
+----------------------------------------------------
+Parallelized TABLES_PHO : bad results, J's are wrong.
+Found basick shortcoming of OpenMP parallelization since v7s06: 
+PHO (J calc) CAN NOT BE PARALLELIZED. Reason: modules PHO_VARS and PHO_AERO 
+contain vars which are not latitude dependent: these modules should be 
+THREADPRIVATE. Consequences: TABLES_PHO can not be parallelized ; 
+mainsw(11)=2 can not work since it makes PHO be called from CHEMDR which is 
+parallelized. This problem will be fixed on later version.
+We keep the new "parallelizable" version of TABLES_PHO but the OMP instructions 
+are commented out. Re-introduced 'daypas' (module SIM_CONTROLS): forcings
+in chem.f re-calc every daypas (=5 by default).
+ADVECT_CHEM is OpenMP-parallelized across species.
+Order of parallelized latitude loops is optimized for CPU load balancing: see
+new integer omp_lats(lmax) (module ALLCO, dynam.mod.f) set in CHECK_CTRLS.
+Default chemdtm set to 30. in SIM_CONTROLS . chemdtm=60 fails to cvg in IMP_SLV
+if we keep the usual tolerances (epsilon=1e-3, epsilon_strong=1e-4).
+Trying a very fast run with chemdtm=60, epsilon=5e-3, epsilon_strong=1e-3 :
+works well, no big T difference, O3 difference is non negligible in the polar 
+night - but still acceptable for long-term scenarii (?).
+Removing all params of transport by convection & front: ALPHAMF, CONVECT, 
+mainsw(7), front.dat, conv.dat, mfl.dat - great simplification of IMP_SLV.
+ext_frc removed from CHEMDR -> removed INDPRD (preprocessed.f) and its call 
+in IMP_SLV. Reminder: preprocessor is out of date (even more than at v7s06)!!!
+Calc of chemical reaction rates is done in USRRXT (usrrxt.f), SETRXT and ADJRXT
+(both in preprocessed.f). These 3 routines are now called from CHEM, outside the 
+diurnal time loop.
+Final tests for long-duration sims: 3-year sim, nCPUs=5:
+                                 REALt      REALt      REALt       CPUt        CPUt
+v7s08 : daypas=1,chemdtm=60  -> 50s/day, 5.0h/year, 10.5day/50yr, 110s/day, 559hr/50yr
+v7s08a: daypas=5,chemdtm=120 -> 27s/day, 2.7h/year,  5.6day/50yr,  55s/day, 278hr/50yr
+Notice IMP_SLV cvg only if epsilon made bigger.
+These 2 sims have some differences, especially around polar day terminator
+(which extends too equatorwards in v7s08a, compare o3-night on Jan/1).
+But these differences are not fundamental and do not increase with time.
+
+v7s09: new scenarii in ANTHRO_CHANGE; reduced SOLMAX conditions - WORKS
+-----------------------------------------------------------------------
+In socycles.f, at solmax: reduced f107 from 265 to 220 and fbeamr(lya) from 
+6.75e11 to 6.e11. Routine ANTHRO_CHANGE completely changed: removed IPCC1996 
+scenario ; replaced by 1954-2004 scenario (see routine). 
+Four 1954-2004 production runs for COSPAR2002. But a "bug" makes
+undesirable scenarii when forcings are kept constant: in main.f, 
+ANTHRO_CHANGE is called only when gcc_sw(2:)/=0 -> all control runs with cst 
+forcings use 1994 forcing. 
+v7s09 : prepare1954: 1934-1954, SOLMIN, 1954BC
+v7s09a: full 1954-2004 simulation, H2O DIRECT RADIATIVE EFFECT EXCLUDED (cf v7s11)
+v7s09b: CH4 & H2O trends, CO2 forcing at 1994 level, solcyle included
+v7s09c: CO2 trend, CH4 & H2O forcings at 1994 level, solcyle included
+v7s09d: solcycle only, CO2 & H2O and CH4 forcings at 1994 levels .
+
+v7s10: new BOUNDY coding and gcc_sw scheme - WORKS - UBC(H2O) tests - PUBLISHED
+-------------------------------------------------------------------------------
+Goal: fix v7s09 "bug". Rnaming routines and module file:
+sim_cont.mod.f -> controls.mod.f ; BOUNDY_TDEP -> BOUNDY
+BOUNDY_INIT -> CST_BOUNDY where FRACTIONS extracted to SURF_COVER (surf_cover.f)
+ANTHRO_CHANGE -> TRENDS_BOUNDY ; INIT_NO_NC -> INIT_FROM_ASCII .
+BOUNDY now calls CST_BOUNDY and (always) TRENDS_BOUNDY. 
+The new scheme with gcc_sw(2:4) is: 
+gcc_sw=0 (default) -> BC remain "cst" at level of initial year set in TRENDS_BOUNDY
+gcc_sw=1           -> BC follow long-term trend set in TRENDS_BOUNDY
+gcc_sw(1) modified: removed tropo warming effect from MSIS_HWM_PLUG.
+Now, gcc_sw(1)=1 -> IC are modified according to TRENDS_BOUNDY
+Re-do the control runs for COSPAR:
+v7s10b: CH4 & H2O trends, CO2 forcing at 1954 level, solcyle included
+v7s10c: CO2 trend, CH4 & H2O forcings at 1954 level, solcyle included
+v7s10d: solcycle only, CO2 & H2O and CH4 forcings at 1954 levels .
+v7s10f: solmin, cst1996BC, flxub(H2O)=0 -> H2O gets much much too high at UBC
+v7s10g: solmin, cst1996BC, ubvmr(H2O)=1e-9 -> has effect only above 110km 
+   (but above 80km in polar night, after 2 year sim)
+
+V7s11: Trying to take H2O direct radiative effect in account - WORKS - PUBLISHED
+--------------------------------------------------------------------------------
+SOCRATES takes in account the IR radiative cooling by H2O using old param from
+Fomichev/et-al-1986,p.529 (see q2 calc in HEAT_IRCOOL). It should not be used 
+with more than 3ppm for H2O. This ceiling was set at v6s27, where I saw its 
+necessity because UBC(H2O) was flux=0. Now UBC(H2O) is vmr=0.1ppm ,
+so I try to raise the ceiling from 3ppm to 10ppm in HEAT_IRCOOL.
+A short try shows that q2 increases most in strato by 25%, but that is an 
+negligible increase for total qcool -> not necessary to prepare1954 again.
+v7s11a: full 1954-2004 simulation, H2O DIRECT RADIATIVE EFFECT INCLUDED
+CST_BOUNDY: seeing v7s10g result -> setting ubc_vmr(H2O)=3.e-8
+v7s11b: last trial to understand H2O at UBC: moldiff(H2O)=0,flxub=0
+   -> above 95km, H2O much smaller, at 120km H2O around 1e-12 !!
+Setting ubc(vid_h2o)%val(:) = 3.e-8 (was 1.e-7)
+   
+Note: explaining the UBC(H2O) problem
+-------------------------------------
+Advection is not a problem: moldiff is. Molecular diffusion -> much more
+thermospheric H2O. No J(H2O) in polar night -> accumulation if flux=0 .
+One would have to set an upward vertical flux in polar night, 
+but we don't know how much. So we are obliged to set ub_vmr(h2o).
+
+v7s12: Trying to increase O3 at night to simulate tidal effect - DISCARDED
+--------------------------------------------------------------------------
+Anne Smith, with ROSE model, finds very high mesospheric O3 during night
+(15 ppm at mesopause). Reason: she has tides -> O2, O and M fluctuate,
+O2+O+M perodically higher, during night there is no O3 loss -> O3 accumulates.
+SOCRATES can not have tides -> trying several ways to simulate this.
+In VDIFF, Kzz*10 for O(3P) -> O3 decreases, does not increase.
+v7s12a: in CHEMDR, at night, 3*rate(rid_hk2:O2+O+M->O3) -> O3 at night 
+increases, but long-lived O(3P) decreases -> O3 during day decreases 
+-> SolHeat(O3) decreases (ChemHeat increases in polar night).
+
+v7s13: Important corrections in DYN forcing by dQ/dy; qbrick port - WORKS
+-------------------------------------------------------------------------
+From Aleksandr Gruzdev ( gruzdev@dkrz.de, a.n.gruzdev@mail.ru ) and thru Guy, 
+learned that in DYNF_TOTAL, the part (q+t2dqprt) of qtot was always expressed 
+in temperature although it should be expressed as a fct of pot temp as dh & dxt  
+(Brasseur/et-al-1990). Trying to correct this, found other mistakes:
+DYNF_TOTAL: 1) (q+t2qprt) multiplied by t2pt as explained above
+            2) fixed c factor: see Brasseur/et-al-1990, eq 12, with dy=R0*dl
+            3) dxt substracted in the same way as dh
+DYN_DIFFUS_HEAT: 1) Fixed t2pt (1.e3*zkm)
+                 2) Changed sign of dh, as in Brasseur/et-al:1990,eq.19
+                    (but opposite to sign in Garcia/Solomon-1983,eq.7)
+All these fixes are necessary together (or T < 0).
+Porting to HP server pegasus.oma.be failed: doesn't recognize optional args 
+when READ_SAVE calls NETCDF_READ.
+Porting to SGI server qbrick.oma.be works: only removing SECNDS functions.
+Using 4 CPUs, daypas=5, chemdtm=60, PHO interp: 2.5h/year (real=wallclock time)
+i.e. twice faster than aeolos. CPU time: 6.5 h/year.
+Results: T different, smoother, sometimes better sometimes worse 
+compared w/MSIS. Mesopause seasonal T var smaller than MSIS (& v7s12). 
+w less intense than v7s12. Temperatures far too low in polar night. 
+GW dyn forcing needs some re-tuning.
+
+v7s14: DYN_BVFREQ corrected ; FGW tests - NEEDS F(GW) RE-TUNING - TEMP DISCARDED
+--------------------------------------------------------------------------------
+D_teta in Brasseur/et-al-1990 now named 'qdiff'=dh+dxt (dyn_diffus_heat.f).
+Notice: D_teta in eq(1) but not used in POTTEMP because it is a 2d-order term
+in theta (vert diffusion). POTTEMP uses correctly (?) kzz=xkz+dxt in coeff of 
+tridiag syst. Vert diffusion due to diurnal tide added correctly to xkz as 
+early as DYN_MAIN. "Molecular diffusion" of temperature added separately (dxt)
+since xkz also used for chemistry.
+DYN_BVFREQ corrected to calc bv as found in classroom text: 
+bv^2 = g/T * (dT/dz - (1-1/gamma)*T/p*dp/dz)
+Results: polar summer mesopasue much colder (120K), FGW too strong 
+needs to be re-tuned.
+V7s14a: further clean in DYN_BVFREQ: 
+           - removed tz=MAX(-6.5e-3,tz(l,:niz)) ;
+           - fatal error if ANY( bb <= 0 ) (when debug=.true. )
+   No error raised, no important difference with v7s14.
+v7s14b: new test with F(GW)=0, compare with Um0.heat.nc -> T globally similar,
+except for lower strato T in polar night.
+v7s14c: test with Lindzen F(GW), crashes after few days, 
+   much too large especially in tropics, w too intense, T unstable
+v7s14c2: re-introduced floor for tz, same result as v7s14c
+v7s14c3: using u_hwm, dyn not nice but kind of OK 
+    (except in polar night where fx much too large)
+v7s14d: test with Hines F(GW), 1-year run does not crash, wrong dyn->T
+   fx develops too high, too large especially in winter hemisphere
+   
+v7s15: based on v7s11 ; monthly averages - WORKS
+------------------------------------------------
+Implemented a new type of archives, *.ma.nc , for monthly averages.
+Averaging and archiving done by new MONTHLY_AVG, vars kept in new module
+MONTHLY_VAR (chem.mod.f). Settings done in arch(8) by modified SET_ARCH.
+Variables interpolated to monthly averaged zgeo by ARCH_VAR2D 
+(modified archive.f) .
+
+v7s16: daily Ly-a and E10.7 from solar2000 as default - WORKS
+-------------------------------------------------------------
+All vars related to solar activity put in new module SUN_VARS (pho.mod.f).
+Related dummy args removed from MSIS_HWM_PLUG, SOLCYCLES, PHO_INIT, CHEM.
+SOLAR2000 values stored in 'S2K_v124_proxies.dat' are read by PHO_INIT and
+used by SOLCYCLES. Default switches changed: mlt_sw(6)=3 DEFAULT uses
+SOLAR2000. Long run v7s16.*.nc works fine.
+Old problem of lat discontinuities in O3-night around stratopause solved:
+due to too long default timestep (60 minutes). v7s16a, with chemdt=5min, has
+no lat discont. This is why runs for Jan Kazil were fine, not because of
+full J calc: v7s16b has full J calc but still o3 lat discont.
+Looking for best dtchem: 20 or 10min still too long (small but clear 
+o3-night discont). Still, making chemdtm=20 the default.
+At v7s16f, washout of HBr (washout.f) reduced by factor of 10.
+
+v7s16 (wrongly labelled "v7s17") was given to Klemens Hocke and runs at 
+University of Bern on a Linux cluster with Portland fortran compiler.
+In MSIS (msis.mod.f, subroutine NWGTD6_F90) Klemens Hocke 
+( klemens.hocke@mw.iap.unibe.ch ) had to set IW(26)=1 to get MSIS working 
+properly below 30km.
+
+v7s17: LY-A finally updated; porting to zeno.oma.be (ifort compiler)
+--------------------------------------------------------------------
+preprocessed.f split into socpp-[routine_name].f. Makefile modified accordingly. 
+The "ifort" compiler works only at optimization level 2: "ifort -O3" compilation 
+results in a segmentation fault in pottemp.f   ...
+set_arch.f : dates in filenames for *dvout*.nc output written more cleanly.
+The Lya (lya) (Lyman-alpha) param in lya_srb_pho.f used outdated parameters.
+The published parameters (GRL-1997) are more precise because they take into
+account crs_O2(T): compare in publi_mine/papers/1997_lyman-alpha/
+the older version "submitted" and the newer "rev1" with its "coverletter.txt".
+All previous version of SOCRATES used the "submitted" parameters, not the "revised"
+parameters (!). The parameters are finally updated from 
+~/other_projects/crs/ly-a/phodis_lya1.f
+
+v7s18: almost identical to v7s17, distributed by ftp
+----------------------------------------------------
+msis_hwm_plug.f : iSW(26) set to 1 for safety: Klemens Hocke had encountered 
+problems with this optimization feature which relies on the SAVE attribute and is 
+not important for SOCRATES since MSIS does not take much time.
+

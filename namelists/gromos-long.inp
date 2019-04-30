@@ -1,0 +1,25 @@
+ &control_parms
+ model_type = 'two_d'
+ start_from = 'newnc'
+ sim_start_time = 1993, 12, 17, 0, 0.
+ sim_stop_time  = 1993, 12, 23, 0, 0.
+ ncpus = 4
+ daypas = 5
+ chemdtm = 60.
+/
+ &io_parms
+ data_dir = './data/'
+ rstrt_filespec = '/home/simonc/socrates/saved/v7s11_1996-12-17.save.nc'
+ arch_dir = '/home/simonc/scratch/'
+ label_short = 'v7s16a'
+ label_long = 'as v7s16 but no PHO interp'
+!
+ arch_month_avg = .true.
+ arch_set(1)  =   'heat', 1993,  3, 17, 0,0.,  2008, 12, 22, 0,0., 10
+ arch_set(2)  =   'save', 1996, 12, 17, 0,0.,  2008, 12, 22, 0,0.,  0
+/
+ &diag_parms
+ diags = .false.
+ ldiag = 1
+ zdiag = 88
+/

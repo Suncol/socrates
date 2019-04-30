@@ -1,0 +1,15 @@
+I am afraid this application has still a number of bugs. The sure way to recover
+is to 'exit' IDL and re-start all over.
+Known bugs for version 3.0 are: 
+
+1. Pointing/zooming on the contour plot after having closed a 1d-plot window...
+is not well understood. Workaround: re-draw the contour plot, by clicking on 
+the selected variable name or on the selected date.
+
+2. Printing wit the "File/Print.." command: this commmand is still very 
+experimental, its results are often poor, depending on the operating system 
+(HP-UX, AIX, SunOS, Win95). These printing bugs are due to IDL, not to view2d.
+The best and safest way to print a plot remains, as in the previous versions,
+to "Export last plot to PostScript file..." and to print the PostScript file
+from outside of IDL. The settings for the PostScript file can be changed in 
+plot_to_file.pro .

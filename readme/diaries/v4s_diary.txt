@@ -1,0 +1,467 @@
+              SOCRATES Version history from 29 sept 1998
+              ------------------------------------------
+
+Development from v3s75, see myversions_v3.txt
+
+v4s001: 1 hour timestep for winds-T loop - WORKS
+------------------------------------------------
+socrates.f: Multiplied dyn_steps by 24, added slt_dyn, removed useless npdynam.
+Running on hal, upgraded to 8 PV1 processors. Very good results, similar to
+v3s75, small T differences in thermosphere. Biggest difference with v and w in
+110-120km range, polar day. w can be downward i.o. upward in polar day! v and w
+are much closer to zero. The O(3P) and H vmr increase at same location.
+
+v4s002: thermal diffusivity corrected - WORKS BUT...
+----------------------------------------------------
+The main idea is to reproduce the "correction" made from v3s75 to v3s76, which
+resulted in T<0 crash after 15 months from dyn instabilities.
+Thus, copied force1.f from v3s76, i.e. straightforward calculation of thermal 
+diffusivity xtz from thermal conductivity, calc of xtz was cumbersome, see 
+notebook 03/05/1999. Other changes:
+- useless vars removed from VEN? in dynam.mod.f, some made local in force1.f
+- Constant temperature profile pt0 (extracted from restart t2d at equator, is a
+  restart breach) and relaxation coeff pt_relax entirely removed from socrates.f
+  and pottemp.f
+- dh was calculated from xkz in DIFTRA. Putting dh calculation directly in 
+  FORCE1, removing routine DIFTRA and module VEN4. 
+- The dyn-temp iteration subloop re-written more cleanly, variable nstep
+  replaced by dyn_steps in module SIM_CONTROLS (sim_cont.mod.f) and 
+  control_parms namelist. dyn_steps is user-specified number of dyn-t iterations
+  per day, default is 24 (ie 1 hour tsteps).
+- Netcdf modules upgraded to crossplatform and error tracing version v3s174, 
+  ie nf_mod.f replaced bt nf_new.mod.f and nf_utils.mod.f heavily modified.      
+- More extensive archiving, ie arch.f from v3s174/arch.w2.f, (w/Tcira removed).
+  Notice fr is now fr+ftrop
+- Removed unused PRTVEN functionality
+Results: run v4s002: 5-year simulation works, mesopause is a little lower and 
+thermosphere temperatures a little higher, BUT T and much more w take erratic 
+behaviour in thermospheric polar night (1st occurs May/16/2017, 85N). 
+The relaxation towards pt0 could fix taht but we don't want it.
+Tried a force1.cleaned.f wich crashed T at once.
+v4s002a: 1-year run with dyn_steps=24*12 (dyn tstep=5min) still shows the same 
+instabilities (run took 16hrs). v4s002b: 1-year run with dyn_steps=24 but n3=1, 
+ie turns on viscous damping from molecular diffusion, Matsuno:1982. 
+This smoothes *very* nicely T and dyn features, this viscosity *is* a physical 
+process. Still, there are problems: look at time evolution of cf,w at 110km. 
+Instabilities oct 1997. v4s002c: 5-year run with n3=1 and dyn_steps=1, the 
+results are clearly more unstable than v4s002b (look at time-lat map of fr in 
+thermosphere).
+
+v4s003: upgrade chem solver - WORKS
+-----------------------------------
+Upgrade chem solver: files soc_inti.f, nlnmat.f, imp_slv.f, lu_fac.f, lu_slv.f 
+and prod_loss.f were overwritten by enhanced code from v3s145/src/*.x.f . 
+chemdr.f : partly updated from v3s174/src/chemdr.x2.f . Same for chem_pmc.f and
+chem_psc.f . Corrected t2dp indexing when setting taero .
+Result: we learn that the neg vals for h2 and o1d come from non-cvgce in IMP_SLV
+Some chem species change slightly in mesosphere.
+wave1.f : removed "return" ending .not. entered part; nwave removed altogether
+(see A Smith's email oct-5-1999)
+
+v4s004: force1.f improved - WORKS
+---------------------------------
+See A Smith's email oct-10-1999: theoritically dh, which was calculated in 
+DIFTRA (now in FORCE1), should use vert gradients of *potential* temperature
+(called ptz,ptzz). It used actual temperature all along (tz,tzz). 
+Trying to calculate ptz, ptzz numerically (VDERIV) from pt=t2d*(p0/p)**k
+(k=.285) then using them to get dh and dxt - fails w/neg temp after 5 iters! 
+Calculating ptz and ptzz in force1.f with ptz=(kT/H+tz)*(p0/p)**k then dh
+following exactly Brasseur/et-al:1990, eq(19) .
+Results, run v4s004: nice, the instability of v4s002b in cf & w time-lat maps 
+at SH, oct 1997 disappears but later instabilities are still there.
+v4s004a: improved calculation of molecular viscosity in force1.f: removed
+Matsuno's param, exact calc follows B/K:1973 (p10) and is applied as in Matsuno.
+v4s004b: flxub(H2) decreased from 1e8 to 3e7 to avoid neg vals.
+Results: vert profiles of v, w get nicer in thermosphere. cf goes to zero lore
+nicely at ub. u profiles slightly different. Little diff for temp.
+The instabilities in cf & w time-lat maps move but are still there.
+v4s004c: cleaned further force1.f . Expected exactly the same results as
+v4s004b, but the instabilities are not at the same place. No "snapshot" in time
+can tell what version is better. Most of the problems (cf) in v4s004c show up in
+thermospheric *northern* polar night. 
+neg_da.f improved, found that O(1D) was getting negative around 80km in polar 
+night but never less than -1e-20 OK .
+
+v4s005: prepare for one big 5-day loop - WORKS
+----------------------------------------------
+Most changes in socrates.f, where vars dtchem and dtchems replaced by parameters
+dt=1. and dts=86400. 
+sol_chm_heat.f and heat_diavg.f replaced by cheam_heat.f and sol_heat_rates.f
+flxub(H2) reduced further to 1e7 to avoid neg vals in ub polar day.
+Finished making force1.f *really* nice: calc ftot then derive and add to cf .
+Removing cool_rate.f and putting all heat_rates together in heat_rate.f . 
+Notice: when going back to classic temp, q = q - alpha*t2d  *must* be done with
+*new* t2d, not the old one (created ever-increasing temps).
+Results : no big change, cf unstabilities still there and still unidentical to
+previous version. Meso temp different, especially in polar night when cf is
+unstable.
+
+v4s006: one big 5-day loop - FAILS
+----------------------------------
+As in v3s76 -> v3s77, merge the two (daypas=)5-days loops for dyn and chem into 
+one iday = 1, daypas loop. 
+Crash after 2 months, crazy temps everywhere, check q after 30 days at 40N, 30km
+Solar heating is too big, already after 10days at this location one can see
+PHO_STAM output diverge from v4s005. The inputs are the same though.
+No cause can be found. Failure to merge the two loops.
+
+v4s007: Fomichev98 cooling rates all the way from 26km - WORKS BUT...
+---------------------------------------------------------------------
+Using Fomichev98 cooling rates all the way from 26km upwards (heat_rate.f).
+Works, no crash, but stratosphere gets warmer everywhere by 10-15K.
+Comparing with new MSIS netCDF output, we see these strato temps are too high
+while comparing v4s005 w/MSIS shows excellent agreement for strato temp.
+Since meso temps were always too high, maybe Fomichev98 (or its implementation)
+has a problem and doesn't cool enough. Keeping Fomi98 in strato for now, but
+should go back to CCM1 cool rate. 
+NOTICE: 1) NCAR CCM1 WAS NOT USING qn2da(co2) but some other, probably fixed 
+           co2 values - see datain.f
+        2) There is H2O IR cooling! Probably it is calculated by the NCAR CCM1 
+           (HECOL). That would explain warmer strato since we lost it.
+        2) New discontinuity in SolHeat at 60km, probably from some heating
+           efficiency setting. Why does it show up only now?
+
+v4s008: ubc on temperature using MSIS in log-p alt - WORKS
+----------------------------------------------------------
+Still comparing v4s007 (or any version) to MSIS output, one sees that the
+(imposed) u.b. on temp is too high by 100K!! Reason: the ubc on temp was
+interpolated from MSIS data by T.H. at 120km, while we use log-p alt where
+z*=120km -> zgeo=113-116.5km, with much lower temp.
+Plugging pressure-version of MSIS (NWGHP6_F90 in msis.mod.f) into boundy.f, 
+which calls msis_plug.f before setting ubtemp. Result: OK, temp goes to 
+colder ub. Heating a little too big, so goes back to ubc.
+CPU time: 3.5hr/sim year
+
+v4s009: allowing nlon var - programming changes - WORKS
+-------------------------------------------------------
+Cleaning code: utility routines grouped in numerical.mod.f, ascii_utils.mod.f
+(READ_COLDAT utility now available), transform.mod.f, date_utils.mod.f . 
+Lots of routines cleaned. Most important: kipd, kidn (module DIURNAL_PARMS) set 
+in new DAY_SLICER_INIT, and used in SETPHT and SOL_HEAT_RATES
+which calcs in a more exact manner. Result SolHeat changes, but in meso where
+too small to have an effect. No big diff w/v4s008 .
+Run v4s009a : SOL_DAY still assumed nlon=8 . SOL_DAY completely simplified, uses 
+kipd and kidn too.
+
+v4s010: daylight criteria changed - J interp at sunrise/sunset - WORKS
+----------------------------------------------------------------------
+Replaced SECJOU_CHAP by SUN_POSITION, now depends on cal_day i.o. daynum
+(input dummy arg of SOL_DAY changed). SOL_DAY, SETPHT, CHEMDR and SOL_HEAT_RATES
+now use the diurnal time index i.o. sec(sza) to discriminate day/night.
+SETPHT heavily modified to interpolate intermediate J diuring sunrise/sunset.
+Results: no changes in T-dyn. Big changes in light-sensitive species as O3, OH
+in upper strato in and close to polar night (much more OH, smoother).
+Weird OH unstability at 76km, 10degrees equatorward from polar day limit.
+O3col: deeper ozone hole, but higher O3col at equator (dyn change?) .
+Identified O(3P) too high in MLT for a long time, responsible for ChemHeat too 
+big -> mesopause too warm. 
+Run v4s010a: replaced calc vmr(O) by MSIS vmr(O).
+Indeed, ChemHeat now twice lower at 100km -> mesopause colder by up to 20K.
+But MSIS vmr(O) is > calc vmr(O) at 85km -> ChemHeat much bigger there ->
+unclean T profile. There seems to be dyn problems as well (look at w in polar
+night).
+Run v4s010b: use MSIS vmr(O,O2,H) as ubc. Result: much better (smaller)
+chem heating, colder mesopause T. Dyn problem mentioned in v4s010a still there.
+Cold bulge at tropics, 80km still there. Archive file lost. 
+Run v4s010c: preparing detailed heat budget output, new module HEAT_TERMS
+(rad2.mod.f). 
+
+v4s011: cosmetic/archiving changes - WORKS
+------------------------------------------
+Changed module BACKATM (chem.mod.f) : xmixo2, xmixn2 replaced by Xmsis(O2,N2).
+Cst awmole, Cp replaced by interactive wmole, Cp calculated in ATMCOND where,
+in a first step, they depend only on MSIS values.
+New specialized arch_heat.f replaces arch_short.f. Outputs some noon/midnight
+species. CPU time: 3.5hr/sim time. Result: using the new heat_budget.pro, one
+suspects that the mesopause too low between 0-30deg lat (dec/22) is still due 
+to too much O+O+M chem heating at 100km. Indeed, n(o3p) is max precisely there.
+LAST VERSION WITH PROVEN, NICE OZONE HOLE.
+Run v4s011a: zeroing O+O+M contrib to chem heating to make sure. Indeed T at
+100km decreases, but enough to place equatorial mesopause at 100km (io 80km)
+only in june, not at any other time of year.
+
+v4s012: take dynamical v3cII3s improvements - FAILS
+---------------------------------------------------
+Looking at v3cII3s results, mesopause is better, surely due to Tcira but still..
+Synthesis of v3cII3s improvements is in versions/diff_output/dif_v3cII3s.v4s011a
+Replacing v4s011a/gravity.aks2.f by v3cII3s/gravity.w2.f
+Replacing v4s011a/tropk.f by v3cII3s/tropk.f
+Replacing v4s011a/lat_heat.f by v3cII3s/lat_heat.f
+Replacing v4s011a/noyion.f by v3cII3s/noyion.f
+Setting xky used in POTTEMP to zero as in v3cII3s/pottemp.f
+Replacing v4s011a/wave1.f and wave1.mod.f by v3cII3s/wave2.new.f and wave2.mod.f
+with same modifs than done to wave1.f (see v4s003 notes)
+Introducing new module PHYS_CST in sim_cont.mod.f. Contains, pi, d2r...
+Crashes after 2.5 mo for temp discontinuity at tropopause. Maybe I should have
+done *all* v3cII3 improvements?
+
+v4s013: finish implementing v3cII3s improvements - WORKS
+--------------------------------------------------------
+All  other v3cII3s improvements of versions/diff_output/dif_v3cII3s.v4s011a
+except for chem solver, but hbr washout replaces h2o washout.
+New relhum_trop.f . Modified alphamf.f, boundy.f, cld_partition.f, datain.f, 
+h2o_partition.f, prod_loss.f, linmat.f, setrxt.f, socrates.f, tempvar.f, 
+washout.f . NCAR CCM1 (datain.f) uses h2oVap as calculated in v3cII3s io 
+qn2da(vid_h2o). Same crash as v4s012. 
+Reverting to pre-v4s012 lat_leat.f: the lat-dependence of new param found in 
+v3cII3 makes no sense. Using xky in POTTEMP again. The crash itself was due to
+too small tropo xkz from v3cII3 tropk.f . In TROPK, keeping the v3cII3 tropo
+xky, but putting the pre-v4s012 xkz. xkz floored to 0.4 m2/s and smoothed in the
+MAIN (gravity.w2.f modified). Results compared w/v4s011: works well, T profile
+different especially in polar regions (dynamics changed a lot). Time evolution
+of O3col changed a lot, and is not as good. H2O profile better.
+Run v4s013a: corrected small bugs compared to v3cII3s: h2oVap in MAIN, tvar in
+CHEMDR. Run designed specifically to compare with arch/rashid/v3cII3_4yr.arch.nc
+Run v4s013b : vert deriv dkzz in pottemp.f is deriv of sum io sum of deriv.
+Result almost identical to v4s013a.
+
+v4s014: NLTE O3 cool above 80km - WORKS 30yr RUN
+------------------------------------------------
+Calc NLTE O3 cool at 9.6 um in kockarts80.f . Very small contrib (<0.3 K/day).
+Results for 2-year run: almost identical to v4s013b. T profile sometimes
+different at poles in strato and meso (eg 6 jan 1998), but this is unstable
+feature. 
+
+v4s015: fixing newtonian cooling coeff and solar heat effic - WORKS
+-------------------------------------------------------------------
+Aim is to remove vert discontinuities in q and irregularities in T.
+alpha was calc in HEACOO with discont at 55km and 93km, efsho2 and efsho3 
+were calc in a completely wrong way in EFFIC. These 2 routines grouped
+in new HEAT_COEFF. alpha smoothed (36 passes!), and efsho* calc correctly
+from Mlynczak/Solomon:1993.
+Results similar to v4s014 but not T/q discont at 55km and 93km any more,
+much nicer.
+
+v4s016: Added cooling by H2O rotational bands - WORKS
+-----------------------------------------------------
+Inspired by the new cool_h2O_rot.f in latest version released by Rashid,
+v3cII51, where it doesn't work. Replaced kockarts80.f by heat_ircoolf.f, wich is
+called by heat_rate.f, and where all IR coolrates are calculated (including call
+to fomichev98.f). The new H2O coolrate is q2 (module TAU4), added like others in
+HEAT_RATE. Re-programmed from formula in appendix of Fomichev/et-al:1986.
+Results: very nice, IRcool_H2O is mac 1K/day in strato, T profiles slightly
+lower in global avg. Polar night, SH: tropopause colder by 15K and mesopause 
+warmer by 10K; NH: same, but stratopause 10km higher and 10K warmer.
+Ozone col in v4s016 > in v4s015
+Notice awful w instability at 80N, alt=110km, Jul/15/1996, and again Jul/5/1997.
+This existed already in v4s015. Should dyn_steps be increased?
+Run v4s016a: dyn_steps=48: instabilities smaller but still there (see SOCRATES
+notebook, 13jan2000). Probably dyn_steps should be increased when the total dyn
+forcing, cf (VEN5) gets large. See v4s018.
+
+v4s017: Added water/PSC/PMC modifs from v3cII51 - WORKS
+-------------------------------------------------------
+See Rashid's email, Jan/6/2000, on his latest release v3cII51. Updating only the
+water/PSC/PMC routines, see diff_v3cII3s.v3cII51 . Also fixed save.f bug for
+variables tr and delta (modules TRNS and DISSPA in wave2.mod.f). Now saving
+rtr1, rtr2, itr1, itr2, delta1, delta2. The save files produced beginning with
+this version must be read by read_save.v4s017.f .
+Tested resuts on 15d, small tropo diff for H2O, O3 .
+
+v4s018: Added dyn modifs from v3cII51 - WORKS BUT...
+----------------------------------------------------
+See diff_v3cII3s.v3cII51: implemented all remaining (dynamical & tropopause)
+modifs from v3cII51 except smoothing of fx in gravity.w2.f and setting huge
+tropo Kzz in tropk.f (rejected). Notice the new setting of ftrop, extracted from
+force1.f to new force_tropo.f, and updating lat_heat.f which had crashed v4s012.
+Results: completely different T profiles, especially at the poles. MUCH colder
+tropopause. There seems to be HUGE PSC activity (abar1) and ozone hole at 10km. 
+Obliged to interpolate O3 linearily (io spline) in fomichev98.f .
+Still, crashed after 21 months with vmr(hcl,cl,cl2,cl2o2,o2) > 1, and incredible
+ozone hole at *North* pole. 
+v4s018a: fixed small bug by which dyn_time was updated only every 5 days. 
+Created diag_dyn.f to check instability discussed at v4s016. 
+Result: no crash any more! But still, ozone at south pole goes < 100DU!!
+Since tropopause T at poles much colder, one should remove the added T vars for
+PSC.
+
+v4s019: Prepared for variable dyn tstep - renamed routines - SAME
+-----------------------------------------------------------------
+The constants are fixed in WUP, BALANCE, BVFREQ.
+The following routines are still called by the MAIN:
+force_tropo.f -> dynf_tropo.f, adam.f -> dyn_adam.f, strcal_lb.f -> dyn_solve.f,
+diag_dyn.f -> dyn_diags.f
+New subroutine DYN_MAIN was extracted from the MAIN and now calls:
+bvfreq.f -> dyn_bvfreq.f, wup.f -> dyn_wup.f, nwind.f -> dyn_u.f, 
+gravity.w2.f -> dynf_gwave.f, tide.f -> dynf_tide.f, wave2.f -> dynf_pwave.f,
+force1.f -> dynf_total.f . Notice DYNF_TOTAL now called *before* DYNF_ADAM .
+Notice derivating t2d should be put in DYN_MAIN, fixed in v4s020.
+Results identical to v4s018a. v4s019a: Setting tvar_psc='n'. 
+Results: O3col alittle higher but still much too low.
+
+v4s020: variable dyn tstep - WORKS BUT TOO SLOW
+-----------------------------------------------
+Here I call DYN_MAIN first with dyn_tsteps=24, then I increase dyn_tsteps if 
+MAXVAL(ABS(cf)) is too large. The variable dyn tstep can get as small as 5 mins,
+which happens half of the time. Results: The worst w instabilities disappear 
+compared w/v4s019, but time evolution of w is still not nice, and the model 
+becomes MUCH too slow: exec terminated after the max CPU time of 18h, and only 
+1.6 yr simulated!
+
+v4s021: cst dyn tstep - use of Tmsis in force1.f - SAME
+-------------------------------------------------------
+Reverting to a cst dyn_tsteps=24 as in v4s019. Seeing the use of t_save in 
+v4s001, we use Tmsis io t2d to calc xtz, ftx and fmvisc in dynf_total.f .
+Results: w as instable as in v4s019.
+
+v4s022: Calculating diffusion of heat once per 5 days - SAME
+------------------------------------------------------------
+Extracted from dynf_total.f the calc of dh, xtz and ftx, placed it in new
+DYN_DIFFUS_HEAT, called by MAIN *before* the iday=1,5 loop for dynamics.
+Results: w still as unstable. Aborted run at Jun/30/1996.
+Run v4s022a: Found out that the vderiv of u could be calc too late
+in DYN_MAIN, so placed smooth/deriv of u right after call DYN_U.
+Results: uncomplete run (mistake on CPU limit). w still unstable.
+Run v4s022b: all calcs in DYN_DIFFUS_HEAT as a function of Tmsis io t2d.
+Results: w even more unstable - forget v4s022b.
+
+v4s023: new calculation of u - WORKS WELL
+-----------------------------------------
+w unstable when u shows vert discont (85S, jun/25/1996 or oct/13/1996). 
+Hypothesis: u discont -> fx discont -> wrong cf -> wrong w -> wrong T.
+Why does u show vert discont? Re-wrote dyn_u.f following eq (4) of
+Brasseur/et-al:1990. Still integrating upward, but discretization uses *two*
+previous points. Smoothing and flooring to +-150 still necessary. 
+Results: excellent, u does not show vert discont, time evolution of w is not 
+unstable any more (although still not smooth). Temperature profiles more
+realistic (stratopause was much too warm before, compared w/MSIS or v3cII51).
+Takes 3.5CPUhr/SimYr on hal.
+
+v4s024: reverting to pre-v3cII51 ftrop, fixing usurface - WORKS BETTER
+----------------------------------------------------------------------
+To get rid of too cold tropopause, reverting to pre-v3cII51 (ie pre-v4s018) 
+ftrop: deleting DYNF_TROPO, re-inserting ftrop calc in DYNF_TOTAL.
+Results: tropoause get warmer indeed, much closer to v3cII51 - even though I
+removed v3cII51's ftrop!
+v4s024a: enforced respect of lbc on u: modified read_temp.f, now reads
+usurface.dat (modified from data file udat with headers added).
+In DYN_MAIN, SMOOTHL(u) begins at iz=2. u(:,1) now respects usurface.
+Results: T very good, but ozone hole too low (110DU) and u shows angular points
+in vert profiles in southern polar night, where time evolution of u is chaotic
+(still much less than v4s022).
+v4s024b: using qcool by NCAR CCM1 in strato (as before v4s007) but w/interactive 
+co2 ( corrected datain.f ). Results: global stratopause gets 10K colder to same
+vals as v3cII51 (see tglobal.cdr). MSIS vals are in between v4s024a and v4s024b.
+One should use CCM1 qcool up to 35km io 51km. The u calc should still be fixed:
+look at vert discont, jul/aug at -85S.
+v4s024c: trial with dyn_steps=1 - huge T in mesosphere - aborted.
+v4s024d: trial with one 5-days loop - crashes with too warm stratopause after 3
+         months at -85S.
+         
+v4s025: calculation of u re-done again - WORKS BETTER
+-----------------------------------------------------
+Based on v4s024b. Fixed bug in sediment.f (look Rashid's email, Jan/28/2000).
+Re-made DYN_U (see notebook, Jan/30/2000). Fails after may/11/1996.
+v4s025a: found out that the condition for unstable u is 1+au=0. Re-took DYN_U
+from v4s024b but limiting u so that 1+au>epsilon. Results: fails in aug/1996.
+v4s025b: found that vert smoothing in DYN_U can be removed if we integrated by
+forward Euler (2 points). Applied the limitation to avoid singularity in a more
+consistent way. Results: the u instability is still there, but less 
+than in v4s024b. The temperature field at solstice is different, but not worse.
+Look at T evolution in at mesopause: warmer mesopause in polar regions around
+february. v4s025c: various attempts to enhance DYN_U, all failed. Latest version
+has very interesting diagnostics (to fort.33) on singularity though.
+
+v4s026: fixing IC, introducing HWM, using usurface from hwm - WORKS BEST
+------------------------------------------------------------------------
+v4s026: using Tmsis io t2d to calculate u. Amazing results. Much colder
+mesopause and totally different dynamical state. The u calculated from MSIS
+have a much smaller vert amplitude than u from t2d. It seems that more GW 
+reach the meso since fx (GW dyn forcing) and Kzz get much bigger there.
+At first the global avg T profile remains the same, only the lat gradients 
+become *much* stronger. Then the global avg is modified too (mespause at 150K!).
+u being smaller,  Run crashes may/16/1996 with too warm stratopause at south 
+midlat. The param of the source of GW must probably be re-done.
+v4s026a: identical to v4s025b but the IC on temperature is MSIS. Default
+restart file is data/save.9.28.1995.nc. read_save.old.f is now read_save_old.f,
+does not read u. Plugging HWM93 (hwm.mod.f) into SOCRATES, msis_plug.f becomes
+msis_hwm_plug.f. Using u_hwm io (CIRA) usurface, same but smoother.
+Results join v4s025b after 6 months.
+v4s026b: trying to integrate u downward from UBC by HWM. Total failure, wrong u,
+crash after 1.5mo.
+v4s026c: based on v4s026a, DYN_U uses u_hwm io u to calculate du/dz. This
+"cheat" allows to stabilize definitely u, neat profiles and time evolution, u
+slightly different.
+v4s026d: fixed constants throughout model, mainly related to pi, omega, R0.
+Reverting to interactive calc of wmole & Cp in ATMCOND.
+A bug when calculating hv in MAIN results in no solar heating - interesting
+result, stratosphere disappears, kept version for fun.
+v4s026e: bug fixed. Vert profile of v nicer. Trial with dyn_steps=1: time 
+evolution of u->fx->w awful, big oscillations. dyn_steps=24: nice results.
+
+v4s027: u solved from geopotential - FAILS
+------------------------------------------
+Using method from Fleming/et-al:1990 as implemented in
+hercules://~/msis/netcdf/pot_u where it gave excellent results.
+Requires dyn_steps=1 to start. Crashes after 3 months with negative discriminant
+at top, polar region...
+
+v4s028: tried to fix restart capability - SAME
+----------------------------------------------
+Based on v4s026e. DYN_DIFFUS_HEAT placedin DYN_MAIN, ATCOND called twice, 
+most important in DYNF_PWAVE the initialization is done if .not. restrt. 
+1st tried with 1 5-days loop: solar heating too big, strato gets too warm.
+With 2 5-days loop: results identical to v4s026e, but restart still doesn't
+work: restarted sim shows smaller O3 solheat -> lower temps. Looking at H2O,
+CO2, O2 profiles: J in restarted file are smaller!! Putting diagnostics in
+PHODIS and found big bug below.
+
+v4s029: fixed MAJOR bug with solar flux - WORKS MUCH BETTER
+-----------------------------------------------------------
+See email "MAJOR BUG in SOCRATES", 25 feb 2000. CRSGET and MAIN modified, fbeamr
+is now correct. The stratopause temperature is much lower & closer to MSIS with
+erroneous annual variation removed. v4s029a: one 5-days loop finally works!
+Results identical to v4s029 except in the 15 first days where oscillations are
+stronger.
+
+v4s030: cross-sections update - SAME
+------------------------------------
+In MAIN, made v4s029a change permanent, replacing dyn_time and current_time by 
+time. CRSGET replaced by PHO_INIT which now reads solflux.dat (from crs99.dat) 
+and crs2000.dat io crs99.dat with crs of follwing species changed:
+- Rayleigh cross-section for air is computed io read
+- O2 qy at Ly-a: qy(->O(3P)+O(1D))=0.58 and qy(->2O(3P))=0.42 see
+  Lacoursiere/et-al:1999, p. 1954
+- H2O at Ly-a: from 1.44e-17 to 1.53e-17 (Lewis/et-al:1983)
+- ClONO2: qy for 2 branches becomes wl-dependent following truly JPL97
+- HOBr: now follows Ingham/et-al:1998 io JPL97
+- Notice previous CO2 changes from crs97.dat following Lewis/Carver:1983.
+Negligible changes compared with v4s029, except for H2O upper profike which gets
+smaller.
+
+v4s031: new, consistent heat budget - WORKS BETTER
+--------------------------------------------------
+Removing dicontinuity of heating terms at 60km :
+- PHORAT computes solar heating rates taking in account Mlynczak/Solomon 
+  efficiencies and energy loss in breaking O2/O3 all the way down 
+  (was only above 60km). jo3_o1d contrib added to jo3 in the same way than jo2.
+- CHEM_HEAT computes chemical heating at all altitudes (was only above 60km)
+  and compensates the decrease of solheat below 60km, especially through 
+  O+O2+M -> O3+M. Results identical there since immediate recombination.
+- HEAT_RATE uses cooling rates from Fomichev down to 17km (was down to 51km).
+  Hence, CCM1 heating/cooling rates are never used above 25km.
+Results: T profile in MLT is identical, strato T profile gets much closer to
+MSIS
+
+v4s032: readying chemheat efficiencies, testing MSIS/HWM use
+------------------------------------------------------------
+Added efch(niz,7) in module AIRGLOW, to set in HEAT_COEFF and use in CHEMHEAT.
+DYN_U does not use u_hwm any more. Results similar to v4s031, singularity not
+encountered any more! 
+v4s032a: replacing u by u_hwm. Mesopause: at some 
+latitudes, this has a big effect on w, where w is much more downward -> more
+O(3P) coming from above -> too big chemheat by O+O+M. Using O from MSIS in
+CHEMHEAT. Still, OH and HO2 much bigger for some reason->chemheat too big at
+polar summer->setting efch(O+OH,O+HO2)=0.
+v4s032b: using O(3P) and H from MSIS in CHEM_HEAT; Setting afac=5. io 
+afac=10. in DYNF_GWAVE.
+
+v4s033: last v4s version
+------------------------
+Removed v4s032a and v4s032b tests. Using O2, O(3P), H and T from MSIS for 
+initcond in NC_READ_INIT. O(3P) and H set to MSIS vals only above 80km.
+
+To-do list
+----------
+- netcdf output of fx is in m/s2 io ms/day. Fix it.
+- Re-tune gravity.w2.f so that it gives big meso xkz as v3cII3 does.

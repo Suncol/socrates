@@ -1,0 +1,24 @@
+The code distributed below comes from my latest version (v4s013).
+Some of this code uses new modules that you do not have. 
+I am sure that you will be able to find the corresponding variables and 
+modules in your version. 
+
+1) Lyman-alpha parameterization
+
+The new file is lya_sr.f . It includes G. Kockarts parameterization of the 
+SR bands (remove kockart.f). I have also posted the files phodis.f, phorat.f 
+and phot.mod.f since they were modified.
+
+2) cooling by NO
+
+The new file is kockarts80.f. It calculates the new cooling rate q5 .
+
+3) cooling by O3
+
+The file fomichev98.f was modified. It now includes fomichev98_data.f (you can 
+remove that file) and calculates, not only the CO2 cooling q4, but also a new 
+cooling rate q3 from O3. It uses the interpolation routines SPLINE, SPLINT and 
+INTERP which can be found in the module file numerical.mod.f 
+
+
+                                  Simon Chabrillat - 16 december 1999

@@ -1,0 +1,40 @@
+                    To-do list for SOCRATES v7
+                    --------------------------
+                    
+- (for code cleanliness) heat_rates.f : initialize output 
+   solheatl and chemheatl to zero
+- Implement pseudo-spherical geometry for wl>SRB as done in writej
+- Implement new Ly-a param by Reddmann/Uhl-2003 & look at chem effects  
+- Present param for qcool(H2O) (heat_ircool.f) uses 3ppm max for H2O. Replace
+  with a param which doersn't have this limit : Morcrette's (ECMWF) param 
+  (see emails) or Fomichev's et al (JGR 10.1029/2001JD000479, may 2002): 
+  email hauke.schmidt@dkrz.de ref guy
+- Ask about heating by CO2 abs of solar IR at 2 microns?
+- Re-do dynf(GW): restart from v7s14, implement Medvedev-Klaassen scheme
+  (see emails: sci-ext/Klaassen) or contact Alex Gruzdev (emails:/aleksandr)
+- Fix the Bry problem (see BASCOE diaries: BASCOE now uses SLIMCAT for Bry species)
+- Add Cly and Bry trends in TRENDS_BOUNDY
+
+- Complete reaction list:
+  CORRECT hk4 : O1D + N2 -> O + N2 ; ARR(2.1e-11,110) (Ravishankara/et-al-2002)
+     ... as in BASCOE:
+  CORRECT hk5a : O1D + O2 -> O + O2 ; ARR(3.2e-11,70) (JPL97&2000 checked)
+  CORRECT c1-c1b : CH4+O1D products : see JPL97 note A9
+  CORRECT a83 : OH + OH + M : see JPL97
+  CORRECT b81 : NO2 + O + M and b82 : NO + O + M : see JPL2000 (9e-30->9e-32)
+  CHECK b22 w/ JPL2000 (different coeff) ; Correct d60 (& d61) w/JPL2000
+  UPDATE b12 & b32 using JPL2000 (table 2 & table 3) ; CHECK d35 & e6
+  Add rid d7b : cl + ho2 -> oh + clo ; ARR(4.1e-11,-450) (JPL97 checked)
+  Add rid d37b: cl + hocl -> clo + hcl ; ARR(7.5e-13,-130) and decrease d37
+  Add rid e85 : hobr + o -> bro + oh ; ARR(1.2e-10,-430)
+  Add species ClOO & all corresp. reactions (see ~/bascoe/bascoe*.eqn) - chg prod in d49,d74,e5b,jcl2o2
+  Add species HCO & all corresp. reactions (see ~/bascoe/bascoe*.eqn) - chg prod in c8,c9,d10,e9,jch2o_h
+  Add species Br2 & all corresp. reactions (see ~/bascoe/bascoe*.eqn)
+  Complete J(CFC) products with HF
+- Test UBC(CO2) as flux to get globally averaged CO2=40ppm at UB (see v6s39a)
+- SPECIAL_NO_PROD: phve_no depends only on altitude, while it should be a
+  factor of daylength td since it has photoelectronical origin.
+- Check H2O at intermediate BC at 17km, 80S-85S, Jul-Sept (see v7s07)
+- Make PHO code parallelizable: see v7s08 notice
+- JF says that J(H2O2) can produce H2O+O (i.o. 2OH) at lambda<248nm.
+  Check q.y. & effect.

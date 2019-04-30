@@ -1,0 +1,43 @@
+             Control switches for the SOCRATES v6s17 model
+             ---------------------------------------------
+
+The defaut values are a tradeoff between interactivity and stability
+
+old name      new name    range     default     Explanation
+  v5s19        v6s17                 value   
+--------      --------    -----     -------     -----------
+use_Tmsis     mainsw(1)    0-2         0       model T relaxed to MSIS : 0-no, 1-from surf to 30km, 2-yes
+offline_batm  mainsw(2)    0/1         1       Background vars calc in ATMCOND: 0-interactive, 1-O2,O,T,n from MSIS
+n6            mainsw(3)    0-2         1       calc of zonal wind u uses u: 0-is u_hwm, 1-uses u_hwm, 2-interactive u
+n1            mainsw(4)    0-2         2       GW param for drag & Kzz: 0-Rayleigh drag & specified Kzz, 1-Lindzen, 2-Hines
+n2            mainsw(5)    0-2         2       PW param for drag & Kyy: 0-specified drag, 1-Rossby, 2-coupled wave
+n7            mainsw(6)    0/1         1       Chemical heating: 0-none ; 1-active
+n8            mainsw(7)    0/1         1       Param of tropo transport by convection & fronts: 0-none ; 1-active
+nqbosw        mainsw(8)    0/1         0       Quasi-Biennal Oscillation param: 0-none ; 1-active
+
+
+n3            mlt_sw(1)    0/1         1       Momentum forcing by molecular viscosity: 0-none ; 1-active
+n4            mlt_sw(2)    0/1         1       Momentum forcing by tidal wave breaking: 0-none ; 1-active
+n5            mlt_sw(3)    0/1         1       Molecular diffusivity (ie thermal conductivity) of heat: 0-none ; 1-active
+n10           mlt_sw(4)   -2/2         2       Special prods of NO: -2 none ; -1 lightning; 0 +cosmic ; 1 +solar X-ray ; 2 +aurora
+                                                     flxub(NO) = 0. if mlt_sw(4) < 1
+sw_lya        mlt_sw(5)    0/1         1       Ly-a parameterization: 0-crs(02,Lya)=1e-20cm2 ; 1-param active
+-             mlt_sw(6)    0-2         0       Solar cycle master switch: 0-solmin, 1-solmax, 2-sin cycle
+-             mlt_sw(7)    0/1         0       Solcycle on F107 in MSIS & HWM: 0-solmin, 1-depends on mlt_sw(6)
+-             mlt_sw(8)    0/1         0       Solar cycle for non-Ly-a : 0-solmin, 1-depends on mlt_sw(6)
+n9            mlt_sw(9)    0/1         0       Solcycle for Ly-a line: 0-solmin, 1-depends on mlt_sw(6)
+-             mlt_sw(10)   0/1         0       Solcycle for MLT NO: 0-solmin, 1-depends on mlt_sw(6) (*2 at solmax)
+
+
+polar         het_sw(1)    0/1         0       PSC chemistry: 0-none, 1-active
+tvar_psc      het_sw(2)    0-2         0       T fluctuation for PSC: 0-none, 1-random, 2-wave ; active only if polar=1
+npsc_t        het_sw(3)    0/1         0       T value for PSC: 0-interactive T, 1- NMC T ; active only if polar=1
+PolMesCld     het_sw(4)    0/1         0       PMC chemistry: 0-none, 1-active
+tvar_pmc      het_sw(5)    0-2         0       T fluctuation for PMC: 0-none, 1-random, 2-wave ; active only if PolMesCld=1
+particle      het_sw(6)    0/1         0       sulfate aerosol heterogeneous chemistry: 0-none, 1_active
+aero          het_sw(7)    0/1         0       aerosol effect on J and solar heating rates: 0-none, 1_active
+-             het_sw(8)    0/1         1       Washout of soluble species in the troposphere: 0-none, 1_active
+
+-             gcc_sw(1)   -2/2         0       CO2 ic & lbc: -2 -> 0.5*default ; 0 -> 356ppm+-bco2(lat) ; 2 -> 2*default
+-             gcc_sw(2)   -2/2         0       CH4 ic & lbc: -2 -> 0.5*default ; 0 -> 1.715ppm*bch4(lat) ; 2 -> 2*default
+

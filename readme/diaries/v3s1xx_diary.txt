@@ -1,0 +1,112 @@
+Versions of SOCRATES3 by Simon Chabrillat during visit to ACD, aug/sept 1999
+----------------------------------------------------------------------------
+
+OCT 1999: DEVELOPMENT FROM THESE VERSIONS IS ABANDONED . 
+VERSION v4 FOLLOWS v3s75 AND WILL HOPEFULLY INCLUDE SOME OF THE IMPROVEMENTS
+MADE HERE.
+____________________________________________________________________________
+
+v3cI44
+------
+Base version by Rashid Koshravi, problem being investigated: long-term
+drift of ozone column to unrealistically low values.
+
+v3s145: constant H2O
+--------------------
+Testing if cause is water vapor (value at tropopause level not very good).
+Fixed H2O constant and equal to initial conds always. Result: o3col drift
+still there.
+
+v3s146: t2d = Tcira
+-------------------
+Testing if cause is temperature interaction. Forced temperature=Tcira, using
+the new relaxation time to CIRA temperatures and setting it to 1 day i.o.
+50 days. This really sets temp to CIRA values. Result: o3col drift still there.
+
+v3s147: O3col diagnostics
+-------------------------
+Added new diagnostic subroutine DIAG_TRACE to trace changes to ozone column.
+See o3coltrace.xls. Found out that cause for o3col drift is chemical
+(or convection or vert diffusion). v3s147a: run with several chemical switches off.
+
+v3s148: HBr washout
+-------------------
+Rashid & Guy found cause for o3col drift: Bry species accumulate over time and
+destroy ozone. Solution is to wash out HBr as done for HCl etc.
+There was no o3 col drift in versions around v3c66 because of a bug with qn2noon
+updating: in those versions, qn2noon was not updated -> convection used always
+initcond values which broke an interaction loop and stopped the drift.
+Copied from Rashid washout.new.f and prod_loss.x.new.f. Copied from Stacy some
+chem-solver routines optimized for cache machines (ie DEC alpha).
+HBr doesn't cvg in solver because solver not adapted to HBr washout yet.
+
+v3s149: better HBr washout - cache-optimised chem solver
+--------------------------------------------------------
+Chem solver optimized to cache machines by Stacy and adapted to HBr washout
+by Rashid (?). Copied all *.x2.f files and updated washout.f from
+Rashid. Relax time to CIRA temp set to 50 days in thermosphere as below.
+Results OK - slight upward drift of o3col.
+_________________________________________________________________________
+
+DEVELOPMENTs BELOW BASED ON Rashid's v3cII3, 
+SEE MAIL 9 SEPT 1999 "SOCRATES update".
+_________________________________________________________________________
+
+v3s167: Lyman-alpha parameterization
+------------------------------------
+See v3s67: added Lyman-alpha parameterization following
+Chabrillat and Kockarts, GRL vol. 24, p. 2659, 1997
+File "kockart.f" replaced by "lya_sr.f" . Files "phodis.f" and "phorat.f" 
+modified . Results very similar to v3s149.
+Even CH4 doesn't change much, contrarily to v3s67
+
+v3s168: radiative (5.3 um) cooling by NO
+----------------------------------------
+See v3s68: Radiative cooling by NO at 5.3 um implemented following
+Kockarts, GRL, Vol 7, p. 137, 1980
+New file "kockarts80.f" added. Replaced "co2cool.fmchv98.f" by 
+"cool_rate.f". Modified module TAU4 (file "rad2.mod.f")
+Results from changes are identical to results from changes v3s67->v3s68
+
+v3s169: O3 radiative cooling rate at 9.6 um (LTE) - WORKS
+---------------------------------------------------------
+Implemented O3 radiative cooling rate at 9.6 um (LTE)
+from Fomichev's private communication. File "fomichev98.f"
+modifed. File "fomichev98_data.f" removed (inserted in fomichev98.f)
+
+v3s173: New vertical diffusion scheme and flux upper boundary conditions - FAILS
+--------------------------------------------------------------------------------
+See modifs made to get v3s73 and v3s75. Basically, vdiff_new.f replaces vdiff.f,
+moldiff.f removed, socrates.w2.f and boundy.f modified. 
+As a result, the mesosphere thermospheric profiles of important species
+as H, O3, NO, O(3P) and CO2 are very different (than version II3) 
+- and much more realistic. Of particular notice is the ozone secondary maximum,
+which is now much smaller (in version II3 the secondary maximum of vmr(O3) is as
+big as the primary, stratospheric maximum).
+Because of the new cooling parameterizations described above, and because of 
+chemical heating, the mesopause altitudes and temperatures are significantly 
+different. In the polar night, the heating and cooling rates balance each other
+in a better way, so that the total heating is smaller.
+Although I have all these wonderful results, on walters.acd.ucar.edu, 
+the run fails after 6 months with floating point overflow in CRSCOR, line 104
+(with exp(-qo3b(ivv)/temp(lc)) - cause is actually negative temps (see below)
+
+v3s174: implementation on obelix - FAILS
+----------------------------------------
+Subroutine CRSCOR, file crscor.f : the calculation of qy_o3_o1d, the quantum
+yield of    O3 + hv -> O2 + O(1D)   , allows this value to  < 0 or > 1 ,
+which happens at times (Theresa's work). Slight corrections fixed that.
+Cross-platform compatibility : contrarily to Rashid's version cII3, this one
+runs on Cray and HP platforms as well. 
+The following files had been optimized for DEC : 
+          imp_prod_loss.x2.f ; imp_slv.x2.f ; linmat.x2.f ; lu_fac.x2.f ; 
+          lu_slv.x2.f  and  nlnmat.x2.f
+This made the whole model perform TWICE slower on Cray and HP.
+These optimized files have been appended with the extension *.dec.f (see
+Makefile.dec), while the versions with no extension are platform-independent.
+Bug fixes were made to gravity.w2.f, imp_slv.x2.f and wave2.new.f . 
+File nf_mod.f replaced by nf_new.mod.f .
+Lots of improvements (including error traceback) added to nf_utils.mod.f . 
+Run crashes after 6 months as in v3s173, only the cause is clearer because of
+bug fix in CRSCOR: temperature goes suddenly negative at 109km altitude.
+

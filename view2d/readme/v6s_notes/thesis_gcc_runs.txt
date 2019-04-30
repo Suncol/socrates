@@ -1,0 +1,48 @@
+All the runs for the thesis focusing on anthropogenic global change use SOCRATES v6s28
+--------------------------------------------------------------------------------------
+
+?g0 : 2*CO2, SOLMIN
+Ug1 : 2*CO2, SOLMAX
+Ug2 : 2*CO2, lbt+3.4K, SOLMAX
+Ug3 : CH4 preind
+Ug4 : CH4+CO2 scenario IS92a, SOLMAX
+Ug5 : CH4+CO2 scenario IS92a, SOLVAR
+
+basic: 370Kb/arch date ; heat: 850Kb/arch date ; chem: 2Mb/arch date
+In the table: 5d= "archive every 5 days" ; 4s = Mar/27 + Jun/25 + Sep/28 + Dec 27 ; nb without units are nb of arch dates
+
+             BEGIN ARCH0   |       SAVE  ARCH1    END    SAVE  ARCH2     |        |   ARCH3   END   SAVE  ARCH4   END
+              9/28       1/16      9/28          1/16    9/28          1/16     9/28         1/16   9/28         1/16
+              1995       1997      2002          2004    2007          2009     2011         2013   2017         2019
+______________--|-_______--|-______-|--__________-|--____--|-__________--|-____---|-_________--|-___--|-_________---|
+2*CO2, SOLMIN                                              |             |        |            |      |             |
+tg0.basic                                                  $    5d       |   45d  |     5d     | 45d  |     5d      $
+tg0.heat                                                   $  15d+4s     |    4s  |  15d+4s    |  4s  |    15d+4s   $
+tg0.chem                                                   $                          4s                            $
+tg0.save                                                   $                                          X             $
+___________________________________________________________|_____________|________|____________|______|_____________|
+2*CO2, SOLMAX                       |             |        |             |        |            |
+tg1.basic 103Mb T_CD6               $     5d      |                45d            |    5d      $
+tg1.heat   81Mb T_CD3               $   15d+4s    |              4s               |   15d+4s   $
+tg1.chem   86Mb T_CD4               $                          4s                              $
+tg1.save                            $                                             X            $
+_____________________ ______________$_____________|________|_____________|________|____________|
+2*CO2, lbt+3.4K, SOLMAX             |             |        |             |        |            |
+tg2.basic 103Mb T_CD6               $     5d      |                45d            |    5d      $
+tg2.heat   81Mb T_CD3               $   15d+4s    |              4s               |   15d+4s   $
+tg2.chem   86Mb T_CD4               $                          4s                              $
+tg2.save                            $                                             X            $
+____________________________________$_____________|________|_____________|________|____________|_____________________
+CH4 preind                                                 |             |        |            |      |             |
+tg3.basic 141Mb T_CD6                                      $    5d       |   45d  |     5d     | 45d  |     5d      $
+tg3.heat  107Mb T_CD6                                      $  15d+4s     |    4s  |  15d+4s    |  4s  |    15d+4s   $
+tg3.chem   95Mb T_CD4                                      $                          4s                            $
+tg3.save                                                   $                                          X             $
+___________________________________________________________|_____________|________|____________|______|_____________|
+CH4+CO2 scenario IS92a, SOLMAX      |                                                                               |
+tg4.basic  30Mb T_CD1               $                              4s                                               $
+____________________________________|_______________________________________________________________________________|
+CH4+CO2 scenario IS92a, SOLVAR      |                                                                               |
+tg5.basic  27Mb T_CD1               $                              4s                                               $
+____________________________________|_______________________________________________________________________________|
+

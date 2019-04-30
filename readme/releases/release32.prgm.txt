@@ -1,0 +1,61 @@
+I have tried my best to create a "distribution" version of the SOCRATES source
+code and all the utilities around it. Everything can be copied from 
+acd:/u/simonc/socrates/packages
+
+The file README.txt is the technical description (chapter 6) I wrote for
+Theresa's NCAR technical report. It explains the contents of the different
+packages (*.tar.gz) in the directory. The most important one is the source
+code, socrates.tar.gz . To unpack a package on the ACD IBM:
+$> gunzip socrates.tar.gz
+$> tar -xlf socrates.tar
+
+From am programming point of view, the code of this new version is much 
+cleaner and easier to understand. Improvements include :
+- Initial conditions in a standard NetCDF restart file (data/initcond.nc)
+  for January, 1 (beginning year of simulation left to user's choice).
+  Any restart file providing initial conditions for january 1 or january 2 can
+  be renamed to 'initcond.nc' and used as "internal" initial conditions.
+- All the old parameterizations for solar heating have been removed. 
+  The switching parameters iswave, iniwave, n6 , nplot have been removed.
+  Only the newest code, corresponding to their default values, has been kept.
+- All comments in the 'main' have been completed and updated. The initialization
+  calculations have been extracted from the main to new subroutines.
+- Some of the module files have been renamed, to keep a consistent way of naming
+  them. The module file 'add.mod.f' has been deleted, and its contents inserted 
+  in 'main.mod.f' .
+
+'socrates_data.tar.gz' contains all the data files used by the model, including
+the NetCDF initial conditions file (5.3 Mb). It is interesting to replace the
+old data directory by this new one because all the old, unnecessary data files
+have been removed.
+  
+As described in the 'README.txt', there is a separate directory 'src/cray' for
+the few subroutines specific to Cray machines. The C-shell scripts for Cray
+computers have been updated, but not tested - I will do that on the Cray J90 in
+Brussels (and multitask the code as well).
+
+There is a serious lack of computing power for ACD users of SOCRATES.
+modelling.acd, the IBM used for model calculations, can only be a temporary
+solution because it has only one processor and several users are running their
+models there, making this machine extremely slow. I support Stacy's opinion of
+providing ACD users a DEC alpha compute server.
+Here are the compiling and execution CPU-times for the 3 machines I have tried:
+
+		IBM RS/6000		Cray J-90 (paiute)	DEC alpha
+		(modelling.acd)		1 processor		433 MHz
+
+Compiling time	    45 mins		30 mins			5 mins
+
+1-yr simulation
+execution time	    13 hrs		7.5 hrs			6 hrs
+
+
+
+The package 'view2d.tar.gz' is the last version of the IDL application that 
+I wrote to analyze the results of the model. This new IDL application will run 
+only with SOCRATES version 1.0, the new version distributed in the same
+directory. 'view2d' allows many more possibilities than the previous IDL tool,
+especially to compare two different netCDF files from two different runs, and to
+control the texts and the graphics on the plots. The package contains its own 
+'README.txt' file to explain the use of this IDL application.
+

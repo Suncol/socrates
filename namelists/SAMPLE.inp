@@ -1,0 +1,41 @@
+ &control_parms
+ model_type = 'two_d'
+ start_from = 'newnc'
+ sim_start_time = 2003, 12, 17, 0, 0.
+ sim_stop_time  = 2005,  1,  2, 0, 0.
+ ncpus = 24
+ daypas = 5
+ chemdtm = 5.
+/
+ &io_parms
+ data_dir = './data_in/'
+ rstrt_filespec = './data_in/v7s11_1996-12-17.save.nc'
+ arch_dir = './data_out/SAMPLE/'
+ label_short = 'sample'
+ label_long = 'socrates7.18.1'
+!
+ arch_set(1)  =   'chem', 2003, 12, 17, 0,0.,  2005,  1,  2, 0,0., 30
+ arch_set(2)  =   'heat', 2003, 12, 17, 0,0.,  2005,  1,  2, 0,0., 30
+!
+ arch_set(11) =  'dvout', 2004,  1, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(12) =  'dvout', 2004,  2, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(13) =  'dvout', 2004,  3, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(14) =  'dvout', 2004,  4, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(15) =  'dvout', 2004,  5, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(16) =  'dvout', 2004,  6, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(17) =  'dvout', 2004,  7, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(18) =  'dvout', 2004,  8, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(19) =  'dvout', 2004,  9, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(20) =  'dvout', 2004, 10, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(21) =  'dvout', 2004, 11, 15, 0,0.,  2009, 12, 22, 0,0., 0
+ arch_set(22) =  'dvout', 2004, 12, 15, 0,0.,  2009, 12, 22, 0,0., 0
+!
+ arch_set(31) =  'save',  2004, 12, 31, 0,0.,  2009, 12, 22, 0,0., 0
+!
+ arch_month_avg = .true.    !# create another netcdf output file containing monthly averages for all chem species and each simulated month
+/
+ &diag_parms
+ diags = .false.    !# .true. for very verbose stdout and to write diurnal variations to  ASCII output file *dvout_yyyymmdd.nc.dat
+ ldiag = 28         !# latitude index of output values written in stdout and in ASCII output file *dvout_yyyymmdd.nc.dat
+ zdiag = 56         !# altitude index of output values written in stdout and in in ASCII output file *dvout_yyyymmdd.nc.dat
+/

@@ -1,0 +1,29 @@
+
+v6s14:  CCM1 used 0 -> 16km,       lin connect 10km above (as before)
+        is better than v6s13 except tropopause too cold for march,equator & 
+        polar day & night (can be fixed with clh for polar day)
+v6s14a: CCM1 used 0 -> tropopause, lin connect 10km above
+        always same as or better than v6s14 except march, North Pole
+v6s14b: CCM1 used 0 -> 40km,       lin connect 10km above
+        T *always* much worse than v6s14, except march, North pole but
+        only at mesopause, much worse below
+v6s14c: CCM1 not used !!
+v6s14d: CCM1 not used and clh set to zero!
+v6s14e: q2 (IRcoolH2O) set to zero below 60km (was set to zero below 15km)
+
+                March,SP     March,EQ     March,NP   Jun,polnight   Jun,EQ      Jun,polday
+
+v6s14  tropo  v6s13<T<ref  T<v6s13<ref  v6s13<T<ref  v6s13<ref<T   v6s13=T=ref  T<v6s13<ref
+       strato v6s13=T=ref  v6s13=T=ref  v6s13<T<ref  T<v6s13<ref   v6s13=T=ref  v6s13=T=ref
+       mesop  v6s13<T<ref  v6s13<T=ref  ref<T<v6s13  v6s13<T<ref   v6s13=T=ref  ref<T=v6s13
+
+v6s14a tropo  v6s14<T<ref  v6s14=T<ref  v6s14<T<ref  ref<T<v6s14   v6s14=T=ref  v6s14<T<ref   
+       strato v6s14=T=ref  v6s14=T=ref  T<v6s14<ref  v6s14=T<<ref  v6s14=T=ref  v6s14=T=ref
+       mesop  v6s14=T<ref  v6s14=T=ref  v6s14<ref<T  v6s14=T<ref   v6s14=T=ref  ref<T<v6s14
+
+v6s14b tropo  T=v6s14<ref  T<v6s14<ref  T<v6s14<ref  ref<v6s14<<T  T<<v6s14=ref T<v6s14<<ref
+       strato v6s14=ref<T  T<<v6s14=ref T<<v6s14<ref T<<v6s14<<ref T<<v6s14=ref T<<v6s14=ref
+       mesop  T<<v6s14<ref T=v6s14<ref  ref<T<v6s14  T<<v6s14<ref  v6s14=ref<T  ref<<v6s14<<T
+
+v6s14c tropo
+       mesop

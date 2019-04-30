@@ -1,0 +1,526 @@
+1          *************************************************
++                                                           ***************************************************
+           ****************************************************************
++                                                                         *************************************
+           **                                                                                                **
+           **                                                                                                **
+           **           v6s22: new cache version (machine was cray (hal), now dec (aeolos))                  **
+           **           directory in/cache/imp_slv.F                                                         **
+           **           v6s12: Added reactions to get O2(a1Delta_g) = o2dg for Jan Kazil                     **
+           **           Added species o2dg & o2s=O2(1Sigma), new photochemistry see table                    **
+           **           Mlynczak/et-al-1993; main o2dg prod simply by jo3_od                                 **
+           **           v6s11: Modified [jch4] from CH4+hv->H2 to CH4+hv->CH3O2+H (LeTexier/et-a             **
+           **           v6s07: Enhanced labelling of J processes with 2 branches                             **
+           **           v5s19: Added [c3] CO + O + M -> CO2 + M with bad ref for k: Solomon/et-a             **
+           **           v5s18: replaced CO2+hv->CO+O(3P) by CO2+hv->CO+O(1D)                                 **
+           **           v5s17: Updated JPL2000 reactions.                                                    **
+           **           v5s12: Added 'fake' species X with no reaction (inert tracer)                        **
+           **           Updated reaction rates as found in (newer) v4s033/src/setrxt.f .                     **
+           **           Added reaction hk7b: O(1D) + O3 -> O2 + O + O (JPL97, P.14) .                        **
+           **           origin : Socrates chemistry with reduced hydrocarbons adapted by simonc@             **
+           **           Also includes 5 heterogeneous reactions for polar mesospheric                        **
+           **           clouds; these are identical to those for PSC for now                                 **
+           **                                                                                                **
+           **                                                                                                **
+           ****************************************************************
++                                                                         *************************************
+           ****************************************************************
++                                                                         *************************************
+0     ***Solution species***
+      (   1)  n2o     
+      (   2)  ch4     
+      (   3)  h2o     
+      (   4)  co      
+      (   5)  hcl     
+      (   6)  hbr     
+      (   7)  co2     
+      (   8)  h2      
+      (   9)  ch2o    
+      (  10)  cfc10   
+      (  11)  cfc11   
+      (  12)  cfc12   
+      (  13)  cfc113  
+      (  14)  cfc114  
+      (  15)  cfc115  
+      (  16)  hcfc22  
+      (  17)  ch3ccl3 
+      (  18)  ch3cl   
+      (  19)  ha1211  
+      (  20)  ha1301  
+      (  21)  hf      
+      (  22)  ch3br   
+      (  23)  chbr3   
+      (  24)  o3      
+      (  25)  o3p     
+      (  26)  o1d     
+      (  27)  h       
+      (  28)  oh      
+      (  29)  ho2     
+      (  30)  h2o2    
+      (  31)  cl      
+      (  32)  cl2     
+      (  33)  clo     
+      (  34)  oclo    
+      (  35)  hocl    
+      (  36)  clono2  
+      (  37)  clno2   
+      (  38)  cl2o2   
+      (  39)  n       
+      (  40)  no      
+      (  41)  no2     
+      (  42)  no3     
+      (  43)  hno3    
+      (  44)  n2o5    
+      (  45)  ho2no2  
+      (  46)  br      
+      (  47)  bro     
+      (  48)  hobr    
+      (  49)  brono2  
+      (  50)  brcl    
+      (  51)  ch3o2   
+      (  52)  ch3ooh  
+      (  53)  o2      
+      (  54)  o2dg    
+      (  55)  o2s     
+      (  56)  x       
+0     ***Invariant species***
+      (   1)  m       
+      (   2)  n2      
+0Class List
+ ----- ----
+0Implicit  
+ --------
+      (   1)  n2o     
+      (   2)  ch4     
+      (   3)  h2o     
+      (   4)  co      
+      (   5)  hcl     
+      (   6)  hbr     
+      (   7)  co2     
+      (   8)  h2      
+      (   9)  ch2o    
+      (  10)  cfc10   
+      (  11)  cfc11   
+      (  12)  cfc12   
+      (  13)  cfc113  
+      (  14)  cfc114  
+      (  15)  cfc115  
+      (  16)  hcfc22  
+      (  17)  ch3ccl3 
+      (  18)  ch3cl   
+      (  19)  ha1211  
+      (  20)  ha1301  
+      (  21)  hf      
+      (  22)  ch3br   
+      (  23)  chbr3   
+      (  24)  o3      
+      (  25)  o3p     
+      (  26)  o1d     
+      (  27)  h       
+      (  28)  oh      
+      (  29)  ho2     
+      (  30)  h2o2    
+      (  31)  cl      
+      (  32)  cl2     
+      (  33)  clo     
+      (  34)  oclo    
+      (  35)  hocl    
+      (  36)  clono2  
+      (  37)  clno2   
+      (  38)  cl2o2   
+      (  39)  n       
+      (  40)  no      
+      (  41)  no2     
+      (  42)  no3     
+      (  43)  hno3    
+      (  44)  n2o5    
+      (  45)  ho2no2  
+      (  46)  br      
+      (  47)  bro     
+      (  48)  hobr    
+      (  49)  brono2  
+      (  50)  brcl    
+      (  51)  ch3o2   
+      (  52)  ch3ooh  
+      (  53)  o2      
+      (  54)  o2dg    
+      (  55)  o2s     
+      (  56)  x       
+1     Photolysis
+  (   1)  jo2_op     o2 + hv -> 2*o3p                                                                                                 (   1)
+  (   2)  jo2_od     o2 + hv -> o1d + o3p                                                                                             (   2)
+  (   3)  jo3_op     o3 + hv -> o3p + o2                                                                                              (   3)
+  (   4)  jh2o       h2o + hv -> oh + h                                                                                               (   4)
+  (   5)  jn2o       n2o + hv -> n2 + o1d                                                                                             (   5)
+  (   6)  jco2       co2 + hv -> co + o1d                                                                                             (   6)
+  (   7)  jch4       ch4 + hv -> ch3o2 + h                                                                                            (   7)
+  (   8)  jno2       no2 + hv -> no + o3p                                                                                             (   8)
+  (   9)  jhno3      hno3 + hv -> oh + no2                                                                                            (   9)
+  (  10)  jcfc12     cfc12 + hv -> 2*cl                                                                                               (  10)
+  (  11)  jcfc11     cfc11 + hv -> 3*cl                                                                                               (  11)
+  (  12)  jcfc10     cfc10 + hv -> 4*cl                                                                                               (  12)
+  (  13)  jhocl      hocl + hv -> oh + cl                                                                                             (  13)
+  (  14)  jch3ccl3   ch3ccl3 + hv -> 3*cl                                                                                             (  14)
+  (  15)  jhno4_1    ho2no2 + hv -> ho2 + no2                                                                                         (  15)
+  (  16)  jhno4_2    ho2no2 + hv -> oh + no3                                                                                          (  16)
+  (  17)  jch3cl     ch3cl + hv -> ch3o2 + cl                                                                                         (  17)
+  (  18)  jclno4_1   clono2 + hv -> clo + no2                                                                                         (  18)
+  (  19)  jn2o5      n2o5 + hv -> no2 + no3                                                                                           (  19)
+  (  20)  jo3_od     o3 + hv -> o1d + o2dg                                                                                            (  20)
+  (  21)  jcfc113    cfc113 + hv -> 3*cl + 3*hf                                                                                       (  21)
+  (  22)  jhcfc22    hcfc22 + hv -> cl + 2*hf                                                                                         (  22)
+  (  23)  jha1211    ha1211 + hv -> br + cl + 2*hf                                                                                    (  23)
+  (  24)  jha1301    ha1301 + hv -> br + 3*hf                                                                                         (  24)
+  (  25)  jh2o2      h2o2 + hv -> 2*oh                                                                                                (  25)
+  (  26)  jch2o_h    ch2o + hv -> co + ho2 + h                                                                                        (  26)
+  (  27)  jch2o_h2   ch2o + hv -> co + h2                                                                                             (  27)
+  (  28)  jbrono2    brono2 + hv -> .71*bro + .71*no2 + .29*br + .29*no3                                                              (  28)
+  (  29)  jhobr      hobr + hv -> oh + br                                                                                             (  29)
+  (  30)  jch3br     ch3br + hv -> ch3o2 + br                                                                                         (  30)
+  (  31)  joclo      oclo + hv -> o3p + clo                                                                                           (  31)
+  (  32)  jcl2o2     cl2o2 + hv -> 2*cl + o2                                                                                          (  32)
+  (  33)  jcl2       cl2 + hv -> 2*cl                                                                                                 (  33)
+  (  34)  jcfc114    cfc114 + hv -> 2*cl + 4*hf                                                                                       (  34)
+  (  35)  jcfc115    cfc115 + hv -> cl + 5*hf                                                                                         (  35)
+  (  36)  jhcl       hcl + hv -> h + cl                                                                                               (  36)
+  (  37)  jclno2     clno2 + hv -> cl + no2                                                                                           (  37)
+  (  38)  jno3_no2   no3 + hv -> no2 + o3p                                                                                            (  38)
+  (  39)  jno        no + hv -> n + o3p                                                                                               (  39)
+  (  40)  jbrcl      brcl + hv -> br + cl                                                                                             (  40)
+  (  41)  jbro       bro + hv -> br + o3p                                                                                             (  41)
+  (  42)  jclno4_2   clono2 + hv -> cl + no3                                                                                          (  42)
+  (  43)  jno3_no    no3 + hv -> no + o2                                                                                              (  43)
+  (  44)  jchbr3     chbr3 + hv -> 3*br                                                                                               (  44)
+  (  45)  jch3ooh    ch3ooh + hv -> ch2o + oh + ho2                                                                                   (  45)
+  (  46)  jho2       ho2 + hv -> oh + o3p                                                                                             (  46)
+  (  47)  j_o2s      o2 + hv -> o2s                                                                                                   (  47)
+0     Reactions
+  (   1)  a1         h + o2 + m -> ho2 + m                                                                                            (   1)
+  (   2)  a1et       o1d + h2o -> 2*oh                                                   2.20E-10                                     (   2)
+  (   3)  a3et       o1d + h2 -> oh + h                                                  1.10E-10                                     (   3)
+  (   4)  a2         h + o3 -> oh + o2                                                   1.40E-10*EXP( -470./t )                      (   4)
+  (   5)  a5         o3p + oh -> o2 + h                                                  2.20E-11*EXP( 120./t )                       (   5)
+  (   6)  a6         oh + o3 -> ho2 + o2                                                 1.50E-12*EXP( -880./t )                      (   6)
+  (   7)  a6b        ho2 + o3 -> oh + 2*o2                                               2.00E-14*EXP( -680./t )                      (   7)
+  (   8)  a7         o3p + ho2 -> oh + o2                                                3.00E-11*EXP( 200./t )                       (   8)
+  (   9)  a17        oh + ho2 -> h2o + o2                                                4.80E-11*EXP( 250./t )                       (   9)
+  (  10)  a19        oh + h2 -> h2o + h                                                  5.50E-12*EXP( -2000./t )                     (  10)
+  (  11)  a23a       h + ho2 -> 2*oh                                                     7.29E-11                                     (  11)
+  (  12)  a23b       h + ho2 -> h2 + o2                                                  6.48E-12                                     (  12)
+  (  13)  a23c       h + ho2 -> h2o + o3p                                                1.62E-12                                     (  13)
+  (  14)  a24        h2 + o3p -> oh + h                                                  8.80E-12*EXP( -4200./t )                     (  14)
+  (  15)  a26        no + ho2 -> no2 + oh                                                3.50E-12*EXP( 250./t )                       (  15)
+  (  16)  a27        ho2 + ho2 -> h2o2 + o2                                                                                           (  16)
+  (  17)  a30        oh + h2o2 -> h2o + ho2                                              2.90E-12*EXP( -160./t )                      (  17)
+  (  18)  a36        oh + co -> co2 + h                                                                                               (  18)
+  (  19)  a81        o3p + h2o2 -> oh + ho2                                              1.40E-12*EXP( -2000./t )                     (  19)
+  (  20)  a82        oh + oh -> h2o + o3p                                                4.20E-12*EXP( -240./t )                      (  20)
+  (  21)  a83        oh + oh + m -> h2o2 + m                                                                                          (  21)
+  (  22)  b3         o3p + no2 -> no + o2                                                5.60E-12*EXP( 180./t )                       (  22)
+  (  23)  b4         o3 + no -> no2 + o2                                                 3.00E-12*EXP( -1500./t )                     (  23)
+  (  24)  b6         n + no -> n2 + o3p                                                  2.10E-11*EXP( 100./t )                       (  24)
+  (  25)  b7         n + o2 -> no + o3p                                                  1.50E-11*EXP( -3600./t )                     (  25)
+  (  26)  b9         o3 + no2 -> no3 + o2                                                1.20E-13*EXP( -2450./t )                     (  26)
+  (  27)  b12        no2 + no3 + m -> n2o5 + m                                                                                        (  27)
+  (  28)  b22        oh + no2 + m -> hno3 + m                                                                                         (  28)
+  (  29)  b23        ho2 + no2 + m -> ho2no2 + m                                                                                      (  29)
+  (  30)  b24        ho2no2 + m -> ho2 + no2 + m                                                                                      (  30)
+  (  31)  b27        hno3 + oh -> h2o + no3                                                                                           (  31)
+  (  32)  b28        oh + ho2no2 -> h2o + no2 + o2                                       1.30E-12*EXP( 380./t )                       (  32)
+  (  33)  b32        n2o5 + m -> no2 + no3 + m                                                                                        (  33)
+  (  34)  b38        o1d + n2o -> n2 + o2                                                4.90E-11                                     (  34)
+  (  35)  b39        o1d + n2o -> 2*no                                                   6.70E-11                                     (  35)
+  (  36)  b71        no3 + o3p -> no2 + o2                                               1.00E-11                                     (  36)
+  (  37)  b72        no3 + oh -> no2 + ho2                                               2.20E-11                                     (  37)
+  (  38)  b73a       no3 + ho2 -> oh + no2 + o2                                          2.80E-12                                     (  38)
+  (  39)  b73b       no3 + ho2 -> hno3 + o2                                              7.00E-13                                     (  39)
+  (  40)  b81        o3p + no2 + m -> no3 + m                                                                                         (  40)
+  (  41)  b82        no + o3p + m -> no2 + m                                                                                          (  41)
+  (  42)  b84        no + no3 -> 2*no2                                                   1.50E-11*EXP( 170./t )                       (  42)
+  (  43)  c1         ch4 + o1d -> ch3o2 + oh                                             1.50E-10                                     (  43)
+  (  44)  c1a        ch4 + o1d -> ch2o + h2                                              1.50E-11                                     (  44)
+  (  45)  c1b        ch4 + o1d -> ch2o + h + ho2                                                                                      (  45)
+  (  46)  c2         ch4 + oh -> ch3o2 + h2o                                             2.45E-12*EXP( -1775./t )                     (  46)
+  (  47)  c3         co + o3p + m -> co2 + m                                             6.60E-33*EXP( -1103./t )                     (  47)
+  (  48)  c5         ch3o2 + no -> ho2 + ch2o + no2                                      3.00E-12*EXP( 280./t )                       (  48)
+  (  49)  c7         ch3o2 + ho2 -> ch3ooh + o2                                          3.80E-13*EXP( 800./t )                       (  49)
+  (  50)  c8         ch2o + oh -> co + ho2 + h2o                                         1.00E-11                                     (  50)
+  (  51)  c9         ch2o + o3p -> co + ho2 + oh                                         3.40E-11*EXP( -1600./t )                     (  51)
+  (  52)  c10        ch2o + no3 -> co + ho2 + hno3                                       6.30E-13*EXP( -2058./t )                     (  52)
+  (  53)  c17        ch3ooh + oh -> ch3o2 + h2o                                          2.20E-12*EXP( 200./t )                       (  53)
+  (  54)  c44        ch3ooh + oh -> ch2o + h2o + oh                                      1.60E-12*EXP( 200./t )                       (  54)
+  (  55)  d0         oh + ch3cl -> cl + ho2 + h2o                                        4.10E-12*EXP( -1400./t )                     (  55)
+  (  56)  d1         cl + ch3cl -> 2*hcl + co + ho2                                      3.20E-11*EXP( -1250./t )                     (  56)
+  (  57)  d2         cl + o3 -> clo + o2                                                 2.30E-11*EXP( -200./t )                      (  57)
+  (  58)  d3         clo + o3p -> cl + o2                                                3.00E-11*EXP( 70./t )                        (  58)
+  (  59)  d4         clo + no -> no2 + cl                                                6.40E-12*EXP( 290./t )                       (  59)
+  (  60)  d5         cl + ch4 -> hcl + ch3o2                                             9.60E-12*EXP( -1360./t )                     (  60)
+  (  61)  d6         cl + h2 -> hcl + h                                                  3.70E-11*EXP( -2300./t )                     (  61)
+  (  62)  d7         cl + ho2 -> hcl + o2                                                1.80E-11*EXP( 170./t )                       (  62)
+  (  63)  d8         clo + oh -> cl + ho2                                                7.40E-12*EXP( 270./t )                       (  63)
+  (  64)  d8a        clo + oh -> hcl + o2                                                3.20E-13*EXP( 320./t )                       (  64)
+  (  65)  d10        cl + ch2o -> hcl + co + ho2                                         8.10E-11*EXP( -30./t )                       (  65)
+  (  66)  d11        oh + hcl -> h2o + cl                                                2.60E-12*EXP( -350./t )                      (  66)
+  (  67)  d31        clo + no2 + m -> clono2 + m                                                                                      (  67)
+  (  68)  d32        o3p + clono2 -> no3 + clo                                           2.90E-12*EXP( -800./t )                      (  68)
+  (  69)  d33        clo + ho2 -> hocl + o2                                              4.80E-13*EXP( 700./t )                       (  69)
+  (  70)  d33a       clo + ho2 -> hcl + o3                                                                                            (  70)
+  (  71)  d34        oh + hocl -> h2o + clo                                              3.00E-12*EXP( -500./t )                      (  71)
+  (  72)  d35        o3p + hocl -> oh + clo                                              1.70E-13                                     (  72)
+  (  73)  d36        cl + no2 + m -> clno2 + m                                                                                        (  73)
+  (  74)  d37        cl + hocl -> oh + cl2                                               2.50E-12*EXP( -130./t )                      (  74)
+  (  75)  d47        clo + clo -> cl + oclo                                              3.50E-13*EXP( -1370./t )                     (  75)
+  (  76)  d48        clo + clo -> cl2 + o2                                               1.00E-12*EXP( -1590./t )                     (  76)
+  (  77)  d49        clo + clo -> 2*cl + o2                                              3.00E-11*EXP( -2450./t )                     (  77)
+  (  78)  d50        ch3ccl3 + oh -> 3*cl + h2o                                          1.80E-12*EXP( -1550./t )                     (  78)
+  (  79)  d52        hcfc22 + oh -> cl + h2o                                             1.00E-12*EXP( -1600./t )                     (  79)
+  (  80)  d60        clo + clo + m -> cl2o2 + m                                                                                       (  80)
+  (  81)  d61        cl2o2 + m -> 2*clo + m                                                                                           (  81)
+  (  82)  d62        oclo + oh -> hocl + o2                                              4.50E-13*EXP( 800./t )                       (  82)
+  (  83)  d63        cl + oclo -> 2*clo                                                  3.40E-11*EXP( 160./t )                       (  83)
+  (  84)  d64        oclo + o3p -> clo + o2                                              2.40E-12*EXP( -960./t )                      (  84)
+  (  85)  d65        oclo + no -> no2 + clo                                              2.50E-12*EXP( -600./t )                      (  85)
+  (  86)  d71        o1d + cl2 -> clo + cl                                               2.80E-10                                     (  86)
+  (  87)  d72        cl2o2 + cl -> cl2 + cl + o2                                         1.00E-10                                     (  87)
+  (  88)  d73        no3 + cl -> no2 + clo                                               2.40E-11                                     (  88)
+  (  89)  d74        no3 + clo -> no2 + cl + o2                                          4.70E-13                                     (  89)
+  (  90)  d75        o1d + hcl -> oh + cl                                                1.50E-10                                     (  90)
+  (  91)  d81        oh + cl2 -> hocl + cl                                               1.40E-12*EXP( -900./t )                      (  91)
+  (  92)  d82        cl + clono2 -> cl2 + no3                                            6.50E-12*EXP( 135./t )                       (  92)
+  (  93)  d83        ho2 + cl -> oh + oclo                                               4.10E-11*EXP( -450./t )                      (  93)
+  (  94)  d84        cl + h2o2 -> hcl + ho2                                              1.10E-11*EXP( -980./t )                      (  94)
+  (  95)  d85        o3p + hcl -> cl + oh                                                1.00E-11*EXP( -3300./t )                     (  95)
+  (  96)  d87        clono2 + oh -> hocl + no3                                           1.20E-12*EXP( -330./t )                      (  96)
+  (  97)  d101       cfc10 + o1d -> 4*cl                                                 3.30E-10                                     (  97)
+  (  98)  d102       cfc11 + o1d -> 3*cl + hf                                            2.30E-10                                     (  98)
+  (  99)  d103       cfc12 + o1d -> 2*cl + 2*hf                                          1.40E-10                                     (  99)
+  ( 100)  d104       cfc113 + o1d -> 3*cl + 3*hf                                         2.00E-10                                     ( 100)
+  ( 101)  d105       cfc114 + o1d -> 2*cl + 4*hf                                         1.30E-10                                     ( 101)
+  ( 102)  d106       cfc115 + o1d -> cl + 5*hf                                           5.00E-11                                     ( 102)
+  ( 103)  d107       hcfc22 + o1d -> cl + 2*hf                                           1.00E-10                                     ( 103)
+  ( 104)  e0         ch3br + oh -> ho2 + br + h2o                                        4.00E-12*EXP( -1470./t )                     ( 104)
+  ( 105)  e1         chbr3 + oh -> h2o + 3*br                                            1.60E-13*EXP( -710./t )                      ( 105)
+  ( 106)  e2         br + o3 -> bro + o2                                                 1.70E-11*EXP( -800./t )                      ( 106)
+  ( 107)  e3         bro + o3p -> br + o2                                                1.90E-11*EXP( 230./t )                       ( 107)
+  ( 108)  e4         bro + no -> no2 + br                                                8.80E-12*EXP( 260./t )                       ( 108)
+  ( 109)  e5a        bro + clo -> oclo + br                                              9.50E-13*EXP( 550./t )                       ( 109)
+  ( 110)  e5b        bro + clo -> br + cl + o2                                           2.30E-12*EXP( 260./t )                       ( 110)
+  ( 111)  e5c        bro + clo -> brcl + o2                                              4.10E-13*EXP( 290./t )                       ( 111)
+  ( 112)  e6         bro + bro -> 2*br + o2                                              1.50E-12*EXP( 230./t )                       ( 112)
+  ( 113)  e7         br + ho2 -> hbr + o2                                                1.50E-11*EXP( -600./t )                      ( 113)
+  ( 114)  e8         br + oclo -> bro + clo                                              2.60E-11*EXP( -1300./t )                     ( 114)
+  ( 115)  e9         br + ch2o -> hbr + co + ho2                                         1.70E-11*EXP( -800./t )                      ( 115)
+  ( 116)  e11        oh + hbr -> h2o + br                                                1.10E-11                                     ( 116)
+  ( 117)  e13        bro + no2 + m -> brono2 + m                                                                                      ( 117)
+  ( 118)  e15        bro + ho2 -> hobr + o2                                              3.40E-12*EXP( 540./t )                       ( 118)
+  ( 119)  e71        o1d + hbr -> oh + br                                                1.50E-10                                     ( 119)
+  ( 120)  e72        bro + oh -> ho2 + br                                                7.50E-11                                     ( 120)
+  ( 121)  e81        o3p + hbr -> br + oh                                                5.80E-12*EXP( -1500./t )                     ( 121)
+  ( 122)  e91        ha1301 + o1d -> br + 3*hf                                           1.00E-10                                     ( 122)
+  ( 123)  e92        ha1211 + o1d -> br + cl + 2*hf                                      1.50E-10                                     ( 123)
+  ( 124)  e93        ch3br + o1d -> br                                                   1.80E-10                                     ( 124)
+  ( 125)  hk1        o3p + o3p + m -> o2 + m                                                                                          ( 125)
+  ( 126)  hk2        o3p + o2 + m -> o3 + m                                                                                           ( 126)
+  ( 127)  hk3        o3p + o3 -> 2*o2                                                    8.00E-12*EXP( -2060./t )                     ( 127)
+  ( 128)  hk4        o1d + n2 -> o3p + n2                                                1.80E-11*EXP( 110./t )                       ( 128)
+  ( 129)  hk5a       o1d + o2 -> o3p + o2                                                7.36E-12*EXP( 70./t )                        ( 129)
+  ( 130)  hk5b       o1d + o2 -> o3p + o2s                                               2.46E-11*EXP( 70./t )                        ( 130)
+  ( 131)  hk7a       o1d + o3 -> 2*o2                                                    1.20E-10                                     ( 131)
+  ( 132)  hk7b       o1d + o3 -> o2 + 2*o3p                                              1.20E-10                                     ( 132)
+  ( 133)  hk8        o2dg + o2 -> 2*o2                                                   3.60E-18*EXP( -220./t )                      ( 133)
+  ( 134)  hk9        o2dg + n2 -> o2 + n2                                                1.00E-20                                     ( 134)
+  ( 135)  hk10       o2dg + o3p -> o2 + o3p                                              1.30E-16                                     ( 135)
+  ( 136)  hk12       o2s + n2 -> o2dg + n2                                               2.10E-15                                     ( 136)
+  ( 137)  hk13       o2s + co2 -> o2dg + co2                                             4.20E-13                                     ( 137)
+  ( 138)  hk14       o2s + o3 -> o2dg + o3                                               2.20E-11                                     ( 138)
+  ( 139)  hk15       o2s + o3p -> o2dg + o3p                                             8.00E-14                                     ( 139)
+  ( 140)  hk16       o2s + o2 -> o2dg + o2                                               3.90E-17                                     ( 140)
+  ( 141)  hk21       o1d + n2 + m -> n2o + m                                                                                          ( 141)
+  ( 142)  hk30       o2dg -> o2                                                          2.58E-04                                     ( 142)
+  ( 143)  hk31       o2s -> o2                                                           7.58E-02                                     ( 143)
+  ( 144)  g1         clono2 -> hocl + hno3                                                                                            ( 144)
+  ( 145)  g2         n2o5 -> 2*hno3                                                                                                   ( 145)
+  ( 146)  het1       clono2 -> hocl + hno3                                                                                            ( 146)
+  ( 147)  het2       clono2 + hcl -> cl2 + hno3                                                                                       ( 147)
+  ( 148)  het3       n2o5 -> 2*hno3                                                                                                   ( 148)
+  ( 149)  het4       n2o5 + hcl -> clno2 + hno3                                                                                       ( 149)
+  ( 150)  het5       hocl + hcl -> cl2                                                                                                ( 150)
+  ( 151)  PMChet1    clono2 -> hocl + hno3                                                                                            ( 151)
+  ( 152)  PMChet2    clono2 + hcl -> cl2 + hno3                                                                                       ( 152)
+  ( 153)  PMChet3    n2o5 -> 2*hno3                                                                                                   ( 153)
+  ( 154)  PMChet4    n2o5 + hcl -> clno2 + hno3                                                                                       ( 154)
+  ( 155)  PMChet5    hocl + hcl -> cl2                                                                                                ( 155)
+0 Heterogeneous loss species
+ ( 1)   hno3    
+ ( 2)   h2o2    
+ ( 3)   ch3ooh  
+ ( 4)   hcl     
+ ( 5)   ho2no2  
+ ( 6)   ch2o    
+ ( 7)   hbr     
+0 Extraneous prod/loss species
+ ( 1)   h2o     
+1 Equation Report
+0   d(n2o)/dt = hk21*n2*m*o1d                                                                                           
+                 - jn2o*n2o  - b38*o1d*n2o  - b39*o1d*n2o                                                               
+0   d(ch4)/dt =  - jch4*ch4  - c1*o1d*ch4  - c1a*o1d*ch4  - c1b*o1d*ch4  - c2*oh*ch4  - d5*cl*ch4                       
+0   d(h2o)/dt = a17*oh*ho2  + a19*oh*h2  + a23c*h*ho2  + a30*oh*h2o2  + a82*oh*oh  + b27*hno3*oh  + b28*oh*ho2no2       
+                 + c2*ch4*oh  + c8*ch2o*oh  + c17*ch3ooh*oh  + c44*ch3ooh*oh  + d0*oh*ch3cl  + d11*oh*hcl               
+                 + d34*oh*hocl  + d50*ch3ccl3*oh  + d52*hcfc22*oh  + e0*ch3br*oh  + e1*chbr3*oh  + e11*oh*hbr           
+                 - jh2o*h2o  - a1et*o1d*h2o                                                                             
+0   d(co)/dt = jco2*co2  + jch2o_h*ch2o  + jch2o_h2*ch2o  + c8*ch2o*oh  + c9*ch2o*o3p  + c10*ch2o*no3  + d1*cl*ch3cl    
+                + d10*cl*ch2o  + e9*br*ch2o                                                                             
+                - a36*oh*co  - c3*m*o3p*co                                                                              
+0   d(hcl)/dt = 2*d1*cl*ch3cl  + d5*cl*ch4  + d6*cl*h2  + d7*cl*ho2  + d8a*clo*oh  + d10*cl*ch2o  + d33a*clo*ho2        
+                 + d84*cl*h2o2                                                                                          
+                 - jhcl*hcl  - d11*oh*hcl  - d75*o1d*hcl  - d85*o3p*hcl  - het2*clono2*hcl  - het4*n2o5*hcl             
+                 - het5*hocl*hcl  - PMChet2*clono2*hcl  - PMChet4*n2o5*hcl  - PMChet5*hocl*hcl                          
+0   d(hbr)/dt = e7*br*ho2  + e9*br*ch2o                                                                                 
+                 - e11*oh*hbr  - e71*o1d*hbr  - e81*o3p*hbr                                                             
+0   d(co2)/dt = a36*oh*co  + c3*m*co*o3p                                                                                
+                 - jco2*co2                                                                                             
+0   d(h2)/dt = jch2o_h2*ch2o  + a23b*h*ho2  + c1a*ch4*o1d                                                               
+                - a3et*o1d*h2  - a19*oh*h2  - a24*o3p*h2  - d6*cl*h2                                                    
+0   d(ch2o)/dt = jch3ooh*ch3ooh  + c1a*ch4*o1d  + c1b*ch4*o1d  + c5*ch3o2*no  + c44*ch3ooh*oh                           
+                  - jch2o_h*ch2o  - jch2o_h2*ch2o  - c8*oh*ch2o  - c9*o3p*ch2o  - c10*no3*ch2o  - d10*cl*ch2o           
+                  - e9*br*ch2o                                                                                          
+0   d(cfc10)/dt =  - jcfc10*cfc10  - d101*o1d*cfc10                                                                     
+0   d(cfc11)/dt =  - jcfc11*cfc11  - d102*o1d*cfc11                                                                     
+0   d(cfc12)/dt =  - jcfc12*cfc12  - d103*o1d*cfc12                                                                     
+0   d(cfc113)/dt =  - jcfc113*cfc113  - d104*o1d*cfc113                                                                 
+0   d(cfc114)/dt =  - jcfc114*cfc114  - d105*o1d*cfc114                                                                 
+0   d(cfc115)/dt =  - jcfc115*cfc115  - d106*o1d*cfc115                                                                 
+0   d(hcfc22)/dt =  - jhcfc22*hcfc22  - d52*oh*hcfc22  - d107*o1d*hcfc22                                                
+0   d(ch3ccl3)/dt =  - jch3ccl3*ch3ccl3  - d50*oh*ch3ccl3                                                               
+0   d(ch3cl)/dt =  - jch3cl*ch3cl  - d0*oh*ch3cl  - d1*cl*ch3cl                                                         
+0   d(ha1211)/dt =  - jha1211*ha1211  - e92*o1d*ha1211                                                                  
+0   d(ha1301)/dt =  - jha1301*ha1301  - e91*o1d*ha1301                                                                  
+0   d(hf)/dt = 3*jcfc113*cfc113  + 2*jhcfc22*hcfc22  + 2*jha1211*ha1211  + 3*jha1301*ha1301  + 4*jcfc114*cfc114         
+                + 5*jcfc115*cfc115  + d102*cfc11*o1d  + 2*d103*cfc12*o1d  + 3*d104*cfc113*o1d  + 4*d105*cfc114*o1d      
+                + 5*d106*cfc115*o1d  + 2*d107*hcfc22*o1d  + 3*e91*ha1301*o1d  + 2*e92*ha1211*o1d                        
+0   d(ch3br)/dt =  - jch3br*ch3br  - e0*oh*ch3br  - e93*o1d*ch3br                                                       
+0   d(chbr3)/dt =  - jchbr3*chbr3  - e1*oh*chbr3                                                                        
+0   d(o3)/dt = d33a*clo*ho2  + hk2*m*o3p*o2                                                                             
+                - jo3_op*o3  - jo3_od*o3  - a2*h*o3  - a6*oh*o3  - a6b*ho2*o3  - b4*no*o3  - b9*no2*o3  - d2*cl*o3      
+                - e2*br*o3  - hk3*o3p*o3  - hk7a*o1d*o3  - hk7b*o1d*o3                                                  
+0   d(o3p)/dt = 2*jo2_op*o2  + jo2_od*o2  + jo3_op*o3  + jno2*no2  + joclo*oclo  + jno3_no2*no3  + jno*no  + jbro*bro   
+                 + jho2*ho2  + hk4*n2*o1d  + a23c*h*ho2  + a82*oh*oh  + b6*n*no  + b7*n*o2  + hk5a*o1d*o2               
+                 + hk5b*o1d*o2  + 2*hk7b*o1d*o3                                                                         
+                 - a5*oh*o3p  - a7*ho2*o3p  - a24*h2*o3p  - a81*h2o2*o3p  - b3*no2*o3p  - b71*no3*o3p  - b81*m*no2*o3p  
+                 - b82*m*no*o3p  - c3*m*co*o3p  - c9*ch2o*o3p  - d3*clo*o3p  - d32*clono2*o3p  - d35*hocl*o3p           
+                 - d64*oclo*o3p  - d85*hcl*o3p  - e3*bro*o3p  - e81*hbr*o3p  - 2*hk1*m*o3p*o3p  - hk2*m*o2*o3p          
+                 - hk3*o3*o3p                                                                                           
+0   d(o1d)/dt = jo2_od*o2  + jn2o*n2o  + jco2*co2  + jo3_od*o3                                                          
+                 - hk4*n2*o1d  - hk21*n2*m*o1d  - a1et*h2o*o1d  - a3et*h2*o1d  - b38*n2o*o1d  - b39*n2o*o1d             
+                 - c1*ch4*o1d  - c1a*ch4*o1d  - c1b*ch4*o1d  - d71*cl2*o1d  - d75*hcl*o1d  - d101*cfc10*o1d             
+                 - d102*cfc11*o1d  - d103*cfc12*o1d  - d104*cfc113*o1d  - d105*cfc114*o1d  - d106*cfc115*o1d            
+                 - d107*hcfc22*o1d  - e71*hbr*o1d  - e91*ha1301*o1d  - e92*ha1211*o1d  - e93*ch3br*o1d  - hk5a*o2*o1d   
+                 - hk5b*o2*o1d  - hk7a*o3*o1d  - hk7b*o3*o1d                                                            
+0   d(h)/dt = jh2o*h2o  + jch4*ch4  + jch2o_h*ch2o  + jhcl*hcl  + a3et*o1d*h2  + a5*o3p*oh  + a19*oh*h2  + a24*h2*o3p   
+               + a36*oh*co  + c1b*ch4*o1d  + d6*cl*h2                                                                   
+               - a1*m*o2*h  - a2*o3*h  - a23a*ho2*h  - a23b*ho2*h  - a23c*ho2*h                                         
+0   d(oh)/dt = jh2o*h2o  + jhno3*hno3  + jhocl*hocl  + jhno4_2*ho2no2  + 2*jh2o2*h2o2  + jhobr*hobr  + jch3ooh*ch3ooh   
+                + jho2*ho2  + 2*a1et*o1d*h2o  + a3et*o1d*h2  + a2*h*o3  + a6b*ho2*o3  + a7*o3p*ho2  + 2*a23a*h*ho2      
+                + a24*h2*o3p  + a26*no*ho2  + a81*o3p*h2o2  + b73a*no3*ho2  + c1*ch4*o1d  + c9*ch2o*o3p                 
+                + d35*o3p*hocl  + d37*cl*hocl  + d75*o1d*hcl  + d83*ho2*cl  + d85*o3p*hcl  + e71*o1d*hbr                
+                + e81*o3p*hbr                                                                                           
+                - a5*o3p*oh  - a6*o3*oh  - a17*ho2*oh  - a19*h2*oh  - a30*h2o2*oh  - a36*co*oh  - 2*a82*oh*oh           
+                - 2*a83*m*oh*oh  - b22*m*no2*oh  - b27*hno3*oh  - b28*ho2no2*oh  - b72*no3*oh  - c2*ch4*oh              
+                - c8*ch2o*oh  - c17*ch3ooh*oh  - d0*ch3cl*oh  - d8*clo*oh  - d8a*clo*oh  - d11*hcl*oh  - d34*hocl*oh    
+                - d50*ch3ccl3*oh  - d52*hcfc22*oh  - d62*oclo*oh  - d81*cl2*oh  - d87*clono2*oh  - e0*ch3br*oh          
+                - e1*chbr3*oh  - e11*hbr*oh  - e72*bro*oh                                                               
+0   d(ho2)/dt = jhno4_1*ho2no2  + jch2o_h*ch2o  + jch3ooh*ch3ooh  + b24*m*ho2no2  + a1*m*h*o2  + a6*oh*o3               
+                 + a30*oh*h2o2  + a81*o3p*h2o2  + b72*no3*oh  + c1b*ch4*o1d  + c5*ch3o2*no  + c8*ch2o*oh                
+                 + c9*ch2o*o3p  + c10*ch2o*no3  + d0*oh*ch3cl  + d1*cl*ch3cl  + d8*clo*oh  + d10*cl*ch2o                
+                 + d84*cl*h2o2  + e0*ch3br*oh  + e9*br*ch2o  + e72*bro*oh                                               
+                 - jho2*ho2  - a6b*o3*ho2  - a7*o3p*ho2  - a17*oh*ho2  - a23a*h*ho2  - a23b*h*ho2  - a23c*h*ho2         
+                 - a26*no*ho2  - 2*a27*ho2*ho2  - b23*m*no2*ho2  - b73a*no3*ho2  - b73b*no3*ho2  - c7*ch3o2*ho2         
+                 - d7*cl*ho2  - d33*clo*ho2  - d33a*clo*ho2  - d83*cl*ho2  - e7*br*ho2  - e15*bro*ho2                   
+0   d(h2o2)/dt = a27*ho2*ho2  + a83*m*oh*oh                                                                             
+                  - jh2o2*h2o2  - a30*oh*h2o2  - a81*o3p*h2o2  - d84*cl*h2o2                                            
+0   d(cl)/dt = 2*jcfc12*cfc12  + 3*jcfc11*cfc11  + 4*jcfc10*cfc10  + jhocl*hocl  + 3*jch3ccl3*ch3ccl3  + jch3cl*ch3cl   
+                + 3*jcfc113*cfc113  + jhcfc22*hcfc22  + jha1211*ha1211  + 2*jcl2o2*cl2o2  + 2*jcl2*cl2                  
+                + 2*jcfc114*cfc114  + jcfc115*cfc115  + jhcl*hcl  + jclno2*clno2  + jbrcl*brcl  + jclno4_2*clono2       
+                + d0*oh*ch3cl  + d3*clo*o3p  + d4*clo*no  + d8*clo*oh  + d11*oh*hcl  + d47*clo*clo  + 2*d49*clo*clo     
+                + 3*d50*ch3ccl3*oh  + d52*hcfc22*oh  + d71*o1d*cl2  + d74*no3*clo  + d75*o1d*hcl  + d81*oh*cl2          
+                + d85*o3p*hcl  + 4*d101*cfc10*o1d  + 3*d102*cfc11*o1d  + 2*d103*cfc12*o1d  + 3*d104*cfc113*o1d          
+                + 2*d105*cfc114*o1d  + d106*cfc115*o1d  + d107*hcfc22*o1d  + e5b*bro*clo  + e92*ha1211*o1d              
+                - d1*ch3cl*cl  - d2*o3*cl  - d5*ch4*cl  - d6*h2*cl  - d7*ho2*cl  - d10*ch2o*cl  - d36*m*no2*cl          
+                - d37*hocl*cl  - d63*oclo*cl  - d73*no3*cl  - d82*clono2*cl  - d83*ho2*cl  - d84*h2o2*cl                
+0   d(cl2)/dt = d37*cl*hocl  + d48*clo*clo  + d72*cl2o2*cl  + d82*cl*clono2  + het2*clono2*hcl  + het5*hocl*hcl         
+                 + PMChet2*clono2*hcl  + PMChet5*hocl*hcl                                                               
+                 - jcl2*cl2  - d71*o1d*cl2  - d81*oh*cl2                                                                
+0   d(clo)/dt = jclno4_1*clono2  + joclo*oclo  + 2*d61*m*cl2o2  + d2*cl*o3  + d32*o3p*clono2  + d34*oh*hocl             
+                 + d35*o3p*hocl  + 2*d63*cl*oclo  + d64*oclo*o3p  + d65*oclo*no  + d71*o1d*cl2  + d73*no3*cl            
+                 + e8*br*oclo                                                                                           
+                 - d3*o3p*clo  - d4*no*clo  - d8*oh*clo  - d8a*oh*clo  - d31*m*no2*clo  - d33*ho2*clo  - d33a*ho2*clo   
+                 - 2*d47*clo*clo  - 2*d48*clo*clo  - 2*d49*clo*clo  - 2*d60*m*clo*clo  - d74*no3*clo  - e5a*bro*clo     
+                 - e5b*bro*clo  - e5c*bro*clo                                                                           
+0   d(oclo)/dt = d47*clo*clo  + d83*ho2*cl  + e5a*bro*clo                                                               
+                  - joclo*oclo*oclo  - d62*oh*oclo  - d63*cl*oclo  - d64*o3p*oclo  - d65*no*oclo  - e8*br*oclo          
+0   d(hocl)/dt = g1*clono2  + het1*clono2  + PMChet1*clono2  + d33*clo*ho2  + d62*oclo*oh  + d81*oh*cl2                 
+                  + d87*clono2*oh                                                                                       
+                  - jhocl*hocl  - d34*oh*hocl  - d35*o3p*hocl  - d37*cl*hocl  - het5*hcl*hocl  - PMChet5*hcl*hocl       
+0   d(clono2)/dt = d31*m*clo*no2                                                                                        
+                    - jclno4_1*clono2  - jclno4_2*clono2  - g1*clono2  - het1*clono2  - PMChet1*clono2                  
+                    - d32*o3p*clono2  - d82*cl*clono2  - d87*oh*clono2  - het2*hcl*clono2  - PMChet2*hcl*clono2         
+0   d(clno2)/dt = d36*m*cl*no2  + het4*n2o5*hcl  + PMChet4*n2o5*hcl                                                     
+                   - jclno2*clno2                                                                                       
+0   d(cl2o2)/dt = d60*m*clo*clo                                                                                         
+                   - jcl2o2*cl2o2  - d61*m*cl2o2  - d72*cl*cl2o2                                                        
+0   d(n)/dt = jno*no                                                                                                    
+               - b6*no*n  - b7*o2*n                                                                                     
+0   d(no)/dt = jno2*no2  + jno3_no*no3  + b3*o3p*no2  + b7*n*o2  + 2*b39*o1d*n2o                                        
+                - jno*no  - a26*ho2*no  - b4*o3*no  - b6*n*no  - b82*m*o3p*no  - b84*no3*no  - c5*ch3o2*no              
+                - d4*clo*no  - d65*oclo*no  - e4*bro*no                                                                 
+0   d(no2)/dt = jhno3*hno3  + jhno4_1*ho2no2  + jclno4_1*clono2  + jn2o5*n2o5  + .71*jbrono2*brono2  + jclno2*clno2     
+                 + jno3_no2*no3  + b24*m*ho2no2  + b32*m*n2o5  + a26*no*ho2  + b4*o3*no  + b28*oh*ho2no2                
+                 + b71*no3*o3p  + b72*no3*oh  + b73a*no3*ho2  + b82*m*no*o3p  + 2*b84*no*no3  + c5*ch3o2*no             
+                 + d4*clo*no  + d65*oclo*no  + d73*no3*cl  + d74*no3*clo  + e4*bro*no                                   
+                 - jno2*no2  - b3*o3p*no2  - b9*o3*no2  - b12*m*no3*no2  - b22*m*oh*no2  - b23*m*ho2*no2                
+                 - b81*m*o3p*no2  - d31*m*clo*no2  - d36*m*cl*no2  - e13*m*bro*no2                                      
+0   d(no3)/dt = jhno4_2*ho2no2  + jn2o5*n2o5  + .29*jbrono2*brono2  + jclno4_2*clono2  + b32*m*n2o5  + b9*o3*no2        
+                 + b27*hno3*oh  + b81*m*o3p*no2  + d32*o3p*clono2  + d82*cl*clono2  + d87*clono2*oh                     
+                 - jno3_no2*no3  - jno3_no*no3  - b12*m*no2*no3  - b71*o3p*no3  - b72*oh*no3  - b73a*ho2*no3            
+                 - b73b*ho2*no3  - b84*no*no3  - c10*ch2o*no3  - d73*cl*no3  - d74*clo*no3                              
+0   d(hno3)/dt = g1*clono2  + 2*g2*n2o5  + het1*clono2  + 2*het3*n2o5  + PMChet1*clono2  + 2*PMChet3*n2o5               
+                  + b22*m*oh*no2  + b73b*no3*ho2  + c10*ch2o*no3  + het2*clono2*hcl  + het4*n2o5*hcl                    
+                  + PMChet2*clono2*hcl  + PMChet4*n2o5*hcl                                                              
+                  - jhno3*hno3  - b27*oh*hno3                                                                           
+0   d(n2o5)/dt = b12*m*no2*no3                                                                                          
+                  - jn2o5*n2o5  - b32*m*n2o5  - g2*n2o5  - het3*n2o5  - PMChet3*n2o5  - het4*hcl*n2o5                   
+                  - PMChet4*hcl*n2o5                                                                                    
+0   d(ho2no2)/dt = b23*m*ho2*no2                                                                                        
+                    - jhno4_1*ho2no2  - jhno4_2*ho2no2  - b24*m*ho2no2  - b28*oh*ho2no2                                 
+0   d(br)/dt = jha1211*ha1211  + jha1301*ha1301  + .29*jbrono2*brono2  + jhobr*hobr  + jch3br*ch3br  + jbrcl*brcl       
+                + jbro*bro  + 3*jchbr3*chbr3  + e0*ch3br*oh  + 3*e1*chbr3*oh  + e3*bro*o3p  + e4*bro*no  + e5a*bro*clo  
+                + e5b*bro*clo  + 2*e6*bro*bro  + e11*oh*hbr  + e71*o1d*hbr  + e72*bro*oh  + e81*o3p*hbr                 
+                + e91*ha1301*o1d  + e92*ha1211*o1d  + e93*ch3br*o1d                                                     
+                - e2*o3*br  - e7*ho2*br  - e8*oclo*br  - e9*ch2o*br                                                     
+0   d(bro)/dt = .71*jbrono2*brono2  + e2*br*o3  + e8*br*oclo                                                            
+                 - jbro*bro  - e3*o3p*bro  - e4*no*bro  - e5a*clo*bro  - e5b*clo*bro  - e5c*clo*bro  - 2*e6*bro*bro     
+                 - e13*m*no2*bro  - e15*ho2*bro  - e72*oh*bro                                                           
+0   d(hobr)/dt = e15*bro*ho2                                                                                            
+                  - jhobr*hobr                                                                                          
+0   d(brono2)/dt = e13*m*bro*no2                                                                                        
+                    - jbrono2*brono2                                                                                    
+0   d(brcl)/dt = e5c*bro*clo                                                                                            
+                  - jbrcl*brcl                                                                                          
+0   d(ch3o2)/dt = jch4*ch4  + jch3cl*ch3cl  + jch3br*ch3br  + c1*ch4*o1d  + c2*ch4*oh  + c17*ch3ooh*oh  + d5*cl*ch4     
+                   - c5*no*ch3o2  - c7*ho2*ch3o2                                                                        
+0   d(ch3ooh)/dt = c7*ch3o2*ho2                                                                                         
+                    - jch3ooh*ch3ooh  - c17*oh*ch3ooh  - c44*oh*ch3ooh                                                  
+0   d(o2)/dt = jo3_op*o3  + jcl2o2*cl2o2  + jno3_no*no3  + hk9*n2*o2dg  + hk30*o2dg  + hk31*o2s  + a2*h*o3              
+                + a5*o3p*oh  + a6*oh*o3  + 2*a6b*ho2*o3  + a7*o3p*ho2  + a17*oh*ho2  + a23b*h*ho2  + a27*ho2*ho2        
+                + b3*o3p*no2  + b4*o3*no  + b9*o3*no2  + b28*oh*ho2no2  + b38*o1d*n2o  + b71*no3*o3p  + b73a*no3*ho2    
+                + b73b*no3*ho2  + c7*ch3o2*ho2  + d2*cl*o3  + d3*clo*o3p  + d7*cl*ho2  + d8a*clo*oh  + d33*clo*ho2      
+                + d48*clo*clo  + d49*clo*clo  + d62*oclo*oh  + d64*oclo*o3p  + d72*cl2o2*cl  + d74*no3*clo  + e2*br*o3  
+                + e3*bro*o3p  + e5b*bro*clo  + e5c*bro*clo  + e6*bro*bro  + e7*br*ho2  + e15*bro*ho2  + hk1*m*o3p*o3p   
+                + 2*hk3*o3p*o3  + 2*hk7a*o1d*o3  + hk7b*o1d*o3  + 2*hk8*o2dg*o2  + hk10*o2dg*o3p                        
+                - jo2_op*o2  - jo2_od*o2  - j_o2s*o2  - a1*m*h*o2  - b7*n*o2  - hk2*m*o3p*o2  - hk5b*o1d*o2             
+                - hk8*o2dg*o2                                                                                           
+0   d(o2dg)/dt = jo3_od*o3  + hk12*n2*o2s  + hk13*o2s*co2  + hk14*o2s*o3  + hk15*o2s*o3p  + hk16*o2s*o2                 
+                  - hk9*n2*o2dg  - hk30*o2dg  - hk8*o2*o2dg  - hk10*o3p*o2dg                                            
+0   d(o2s)/dt = j_o2s*o2  + hk5b*o1d*o2                                                                                 
+                 - hk12*n2*o2s  - hk31*o2s  - hk13*co2*o2s  - hk14*o3*o2s  - hk15*o3p*o2s  - hk16*o2*o2s                
+0   d(x)/dt = 0                                                                                                         

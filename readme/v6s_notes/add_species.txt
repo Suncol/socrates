@@ -1,0 +1,30 @@
+How to add a species using the preprocessor, SOCRATES version v6s33
+-------------------------------------------------------------------
+
+1. Edit the "preproc/*.in" file, add the species and the corresponding 
+   reactions at the end of their lists.
+
+2. Run the preprocessor. Transfer "preprocessed.mod.f" and "preprocessed.f" to
+   the directory "src", and "preprocessed.dat" to directory "data"
+
+3. "make clean" in the directory "src"
+
+4. Set the initial conditions in "src/read_save.f" *or* "src/read_save_old.f"
+
+5. Add the species physical properties (at least the molar mass)
+   in "src/vdiff_new.f"
+
+6. By default, the boundary conds are flux=0. at bottom and top. Change that if
+   necessary in "src/boundy.f"
+   
+7. *IF* a new photodissociation process was added:
+
+   7a. Edit "data/crs2001.dat" and add the new cross-section data
+   7b. If you added special temperature-dependent parameters, they must be read
+       in "src/pho_init.f" and used in "src/crscor.f"
+   7c. The photodissociation processes are indexed differently in these 2 files
+       and in the preprocessed routines ("src/preprocessed.mod.f").
+       Edit "src/pho.mod.f" to update the variable "pho_map" in the module
+       PHO_PARMS
+   
+8. Re-compile *everything* and run

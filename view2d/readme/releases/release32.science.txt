@@ -1,0 +1,48 @@
+Hello Guy, Theresa, Stacy,
+
+Before leaving, I would want to thank you to have helped me putting together a
+"final"   ;-) version of the SOCRATES model. The source code is "packed" and
+can be copied from
+acd:/u/simonc/socrates/packages
+
+There are more explanations on the contents of this directory, and on the 
+programming issues involved, in the next e-mail.
+
+The science contained in this version (SOCRATES version 1.0) include all of
+Theresa's improvements up to her version 32, excluding the PSC parameterization
+(chem_psc.f) which is not ready and still at Theresa's version 29.
+All the results that I have compared with measurements look excellent,
+but for a few points described below. The biggest improvement certainly
+came from applying the vertical diffusion (and boundary conditions) at every
+chemical timestep.
+
+Some of the remaining problems with the results:
+- PSC parameterization still does not reproduce exactly the observed 
+  "ozone hole"
+- The HOx family exhibits a big discontinuity at 30km of altitude, although its
+  members OH and HO2 do not. Daytime HOx is often smaller than H + OH + HO2 ,
+  e.g. at 28km, mid-latitudes. This proves that the new HOx calculation and
+  splitting that I wrote last fall is still not OK.
+  Surprisingly, the calculated H, OH and HO2 vertical profiles are very close
+  to the available measurements, so it is not urgent to fix this HOx problem.
+- The [NO] minimum in the upper mesosphere (mid-latitudes) is too low by an 
+  order of magnitude. Theresa re-introduced the parameteriztion for NO 
+  production by ions, but it has an effect only in the polar regions. I hope to
+  look at this more when I am back in Brussels.
+  
+Although the model is not perfect (what model ever gets perfect ?), I am quite
+confident now about using it for sensitivity studies. I plan to use it in
+Brussels to:
+- study the effect of Lyman-alpha solar line, taking in account the 
+  high-resolution spectrums of the O2 cross-section and Lyman-alpha emission.
+- study the effect of the 11-year solar cycle on the mesospheric chemistry
+- Introduce a parameterization for the Polar Mesospheric Clouds (PMC) and study
+  their effect on mesospheric chemistry
+
+I would be happy to keep the version that I will run in Brussels common with 
+the version that Theresa is running here. All I need to do that, is that
+Theresa switches to this new version, and that she keeps me aware of the
+new, tested improvements she brings to the model. With a simple e-mail telling
+me where to find the new files, I can ftp them from Brussels if I have the read
+permissions to do so. I will obviously do the same on my side.
+one I maintain here

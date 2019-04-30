@@ -1,0 +1,313 @@
+BEGSIM
+output unit = 7
+file =     socpp.desc.txt
+
+COMMENTS
+        v6s22: new cache version (machine was cray (hal), now dec (aeolos))
+               directory in/cache/imp_slv.F
+        v6s12: Added reactions to get O2(a1Delta_g) = o2dg for Jan Kazil
+               Added species o2dg & o2s=O2(1Sigma), new photochemistry see table 1 in 
+               Mlynczak/et-al-1993; main o2dg prod simply by jo3_od
+        v6s11: Modified [jch4] from CH4+hv->H2 to CH4+hv->CH3O2+H (LeTexier/et-al-1988)
+        v6s07: Enhanced labelling of J processes with 2 branches
+        v5s19: Added [c3] CO + O + M -> CO2 + M with bad ref for k: Solomon/et-al-1985
+        v5s18: replaced CO2+hv->CO+O(3P) by CO2+hv->CO+O(1D)
+        v5s17: Updated JPL2000 reactions.
+        v5s12: Added 'fake' species X with no reaction (inert tracer)
+               Updated reaction rates as found in (newer) v4s033/src/setrxt.f .
+               Added reaction hk7b: O(1D) + O3 -> O2 + O + O (JPL97, P.14) .
+        origin : Socrates chemistry with reduced hydrocarbons adapted by simonc@oma.be
+        Also includes 5 heterogeneous reactions for polar mesospheric
+        clouds; these are identical to those for PSC for now
+ENDPAR
+
+SPECIES
+
+      Solution
+ n2o, ch4, h2o, co, hcl
+ hbr, co2, h2, ch2o
+ cfc10, cfc11, cfc12, cfc113, cfc114, cfc115, hcfc22, ch3ccl3
+ ch3cl, ha1211, ha1301, hf, ch3br, chbr3
+ o3, o3p, o1d
+ h, oh, ho2, h2o2
+ cl, cl2, clo, oclo, hocl, clono2, clno2, cl2o2
+ n, no, no2, no3, hno3, n2o5, ho2no2
+ br, bro, hobr, brono2, brcl, ch3o2, ch3ooh, o2, o2dg, o2s
+ x
+      Endlst
+
+      Fixed
+ m, n2
+      Endlst
+
+ENDPAR
+
+   Solution classes
+      Implicit
+ All
+      Endlst
+   ENDPAR
+
+ CHEMISTRY
+      Photolysis
+[jo2_op]  o2 + hv -> 2*o3p
+[jo2_od]  o2 + hv -> o1d + o3p
+[jo3_op]   o3 + hv -> o3p + o2
+[jh2o]    h2o + hv -> oh + h
+[jn2o]    n2o + hv -> n2 + o1d
+[jco2]    co2 + hv -> co + o1d
+[jch4]    ch4 + hv -> ch3o2 + h
+[jno2]    no2 + hv -> no + o3p
+[jhno3]   hno3 + hv -> oh + no2
+[jcfc12]  cfc12 + hv -> 2*cl
+[jcfc11]  cfc11 + hv -> 3*cl
+[jcfc10]  cfc10 + hv -> 4*cl
+[jhocl]   hocl + hv -> oh + cl
+[jch3ccl3] ch3ccl3 + hv -> 3*cl
+[jhno4_1]  ho2no2 + hv -> ho2 + no2
+[jhno4_2]  ho2no2 + hv -> oh + no3
+[jch3cl]  ch3cl + hv -> ch3o2 + cl
+[jclno4_1] clono2 + hv -> clo + no2
+[jn2o5]   n2o5 + hv -> no2 + no3
+[jo3_od]  o3 + hv -> o1d + o2dg
+[jcfc113] cfc113 + hv -> 3*cl + 3*hf
+[jhcfc22] hcfc22 + hv -> cl + 2*hf
+[jha1211] ha1211 + hv -> br + cl + 2*hf
+[jha1301] ha1301 + hv -> br + 3*hf
+[jh2o2]   h2o2 + hv -> 2*oh
+[jch2o_h]  ch2o + hv -> co + ho2 + h
+[jch2o_h2] ch2o + hv -> co + h2
+[jbrono2] brono2 + hv -> .71*bro + .71*no2 + .29*br + .29*no3
+[jhobr]   hobr + hv -> oh + br
+[jch3br]  ch3br + hv -> ch3o2 + br
+[joclo]   oclo + hv -> o3p + clo
+[jcl2o2]  cl2o2 + hv -> 2*cl + o2
+[jcl2]    cl2 + hv -> 2*cl
+[jcfc114] cfc114 + hv -> 2*cl + 4*hf
+[jcfc115] cfc115 + hv -> cl + 5*hf
+[jhcl]    hcl + hv -> h + cl
+[jclno2]  clno2 + hv -> cl + no2
+[jno3_no2]  no3 + hv -> no2 + o3p
+[jno]     no + hv -> n + o3p
+[jbrcl]   brcl + hv -> br + cl
+[jbro]    bro + hv -> br + o3p
+[jclno4_2] clono2 + hv -> cl + no3
+[jno3_no]  no3 + hv -> no + o2
+[jchbr3]  chbr3 + hv -> 3*br
+[jch3ooh] ch3ooh + hv -> ch2o + oh + ho2
+[jho2]    ho2 + hv -> oh + o3p
+[j_o2s]   o2 + hv -> o2s
+      Endent
+
+      Reactions
+*        Odd hydrogen reactions
+[a1]       h + o2 + m -> ho2 + m
+[a1et]     o1d + h2o -> 2*oh                ; 2.2e-10
+[a3et]     o1d + h2 -> oh + h               ; 1.1e-10
+[a2]       h + o3 -> oh + o2                ; 1.4e-10, -470
+[a5]       o3p + oh -> o2 + h               ; 2.2e-11, 120
+[a6]       oh + o3 -> ho2 + o2              ; 1.5e-12, -880
+[a6b]      ho2 + o3 -> oh + 2*o2            ; 2.0e-14, -680
+[a7]       o3p + ho2 -> oh + o2             ; 3.e-11, 200
+[a17]      oh + ho2 -> h2o + o2             ; 4.8e-11, 250
+[a19]      oh + h2 -> h2o + h               ; 5.5e-12, -2000
+[a23a]     h + ho2 -> 2*oh                  ; 7.29e-11
+[a23b]     h + ho2 -> h2 + o2               ; 6.48e-12
+[a23c]     h + ho2 -> h2o + o3p             ; 1.622e-12
+[a24]      h2 + o3p -> oh + h               ; 8.8e-12, -4200
+[a26]      no + ho2 -> no2 + oh             ; 3.5e-12, 250
+[a27]      ho2 + ho2 -> h2o2 + o2
+[a30]      oh + h2o2 -> h2o + ho2           ; 2.9e-12, -160
+[a36]      oh + co -> co2 + h
+[a81]      o3p + h2o2 -> oh + ho2           ; 1.4e-12, -2000
+[a82]      oh + oh -> h2o + o3p             ; 4.2e-12, -240
+[a83]      oh + oh + m -> h2o2 + m
+
+*        Odd nitrogen reactions
+[b3]       o3p + no2 -> no + o2             ; 5.6e-12, 180
+[b4]       o3 + no -> no2 + o2              ; 3.e-12, -1500
+[b6]       n + no -> n2 + o3p               ; 2.1e-11, 100
+[b7]       n + o2 -> no + o3p               ; 1.5e-11, -3600
+[b9]       o3 + no2 -> no3 + o2             ; 1.2e-13, -2450
+[b12]      no2 + no3 + m -> n2o5 + m
+[b22]      oh + no2 + m -> hno3 + m
+[b23]      ho2 + no2 + m -> ho2no2 + m
+[b24]      ho2no2 + m -> ho2 + no2 + m
+[b27]      hno3 + oh -> h2o + no3
+[b28]      oh + ho2no2 -> h2o + no2 + o2   ; 1.3e-12, 380
+[b32]      n2o5 + m -> no2 + no3 + m
+[b38]      o1d + n2o -> n2 + o2            ; 4.9e-11
+[b39]      o1d + n2o -> 2*no               ; 6.7e-11
+[b71]      no3 + o3p -> no2 + o2           ; 1.e-11
+[b72]      no3 + oh -> no2 + ho2           ; 2.2e-11
+[b73a]     no3 + ho2 -> oh + no2 + o2      ; 2.8e-12
+[b73b]     no3 + ho2 -> hno3 + o2          ; 7e-13
+[b81]      o3p + no2 + m -> no3 + m
+[b82]      no + o3p + m -> no2 + m
+[b84]      no + no3 -> 2*no2               ; 1.5e-11, 170
+
+*        Carbon reactions
+[c1]       ch4 + o1d -> ch3o2 + oh         ; 1.5e-10
+[c1a]      ch4 + o1d -> ch2o + h2          ; 1.5e-11
+[c1b]      ch4 + o1d -> ch2o + h + ho2
+[c2]       ch4 + oh -> ch3o2 + h2o         ; 2.45e-12, -1775
+[c3]       co + o3p + m -> co2 + m         ; 6.6e-33, -1103
+[c5]       ch3o2 + no -> ho2 + ch2o + no2  ; 3.0e-12, 280
+[c7]       ch3o2 + ho2 -> ch3ooh + o2      ; 3.8e-13, 800
+[c8]       ch2o + oh -> co + ho2 + h2o     ; 1e-11
+[c9]       ch2o + o3p -> co + ho2 + oh     ; 3.4e-11, -1600
+[c10]      ch2o + no3 -> co + ho2 + hno3   ; 6.3e-13, -2058
+[c17]      ch3ooh + oh -> ch3o2 + h2o      ; 2.204e-12, 200
+[c44]      ch3ooh + oh -> ch2o + h2o + oh  ; 1.596e-12, 200
+
+*        Chlorine reactions
+[d0]       oh + ch3cl -> cl + ho2 + h2o    ; 4.1e-12, -1400
+[d1]       cl + ch3cl -> 2*hcl + co + ho2  ; 3.2e-11, -1250
+[d2]       cl + o3 -> clo + o2             ; 2.3e-11, -200
+[d3]       clo + o3p -> cl + o2            ; 3.0e-11, 70
+[d4]       clo + no -> no2 + cl            ; 6.4e-12, 290
+[d5]       cl + ch4 -> hcl + ch3o2         ; 9.6e-12, -1360
+[d6]       cl + h2 -> hcl + h              ; 3.7e-11, -2300
+[d7]       cl + ho2 -> hcl + o2            ; 1.8e-11, 170
+[d8]       clo + oh -> cl + ho2            ; 7.4e-12, 270
+[d8a]      clo + oh -> hcl + o2            ; 3.2e-13, 320
+[d10]      cl + ch2o -> hcl + co + ho2     ; 8.1e-11, -30
+[d11]      oh + hcl -> h2o + cl            ; 2.6e-12, -350
+[d31]      clo + no2 + m -> clono2 + m
+[d32]      o3p + clono2 -> no3 + clo       ; 2.9e-12, -800
+[d33]      clo + ho2 -> hocl + o2          ; 4.8e-13, 700
+[d33a]     clo + ho2 -> hcl + o3
+[d34]      oh + hocl -> h2o + clo          ; 3e-12, -500
+[d35]      o3p + hocl -> oh + clo          ; 1.7e-13
+[d36]      cl + no2 + m -> clno2 + m
+[d37]      cl + hocl -> oh + cl2           ; 2.5e-12, -130
+[d47]      clo + clo -> cl + oclo          ; 3.5e-13, -1370
+[d48]      clo + clo -> cl2 + o2           ; 1e-12, -1590
+[d49]      clo + clo -> 2*cl + o2          ; 3e-11, -2450
+[d50]      ch3ccl3 + oh -> 3*cl + h2o      ; 1.8e-12, -1550
+[d52]      hcfc22 + oh -> cl + h2o         ; 1e-12, -1600
+[d60]      clo + clo + m -> cl2o2 + m
+[d61]      cl2o2 + m -> 2*clo + m
+[d62]      oclo + oh -> hocl + o2          ; 4.5e-13, 800
+[d63]      cl + oclo -> 2*clo              ; 3.4e-11, 160
+[d64]      oclo + o3p -> clo + o2          ; 2.4e-12, -960
+[d65]      oclo + no -> no2 + clo          ; 2.5e-12, -600
+[d71]      o1d + cl2 -> clo + cl           ; 2.8e-10
+[d72]      cl2o2 + cl -> cl2 + cl + o2     ; 1e-10
+[d73]      no3 + cl -> no2 + clo           ; 2.4e-11
+[d74]      no3 + clo -> no2 + cl + o2      ; 4.7e-13
+[d75]      o1d + hcl -> oh + cl            ; 1.5e-10
+[d81]      oh + cl2 -> hocl + cl           ; 1.4e-12, -900
+[d82]      cl + clono2 -> cl2 + no3        ; 6.5e-12, 135
+[d83]      ho2 + cl -> oh + oclo           ; 4.1e-11, -450
+[d84]      cl + h2o2 -> hcl + ho2          ; 1.1e-11, -980
+[d85]      o3p + hcl -> cl + oh            ; 1.e-11, -3300
+[d87]      clono2 + oh -> hocl + no3       ; 1.2e-12, -330
+[d101]     cfc10 + o1d -> 4*cl             ; 3.3e-10
+[d102]     cfc11 + o1d -> 3*cl + hf        ; 2.3e-10
+[d103]     cfc12 + o1d -> 2*cl + 2*hf      ; 1.4e-10
+[d104]     cfc113 + o1d -> 3*cl + 3*hf     ; 2e-10
+[d105]     cfc114 + o1d -> 2*cl + 4*hf     ; 1.3e-10
+[d106]     cfc115 + o1d -> cl + 5*hf       ; 5e-11
+[d107]     hcfc22 + o1d -> cl + 2*hf       ; 1e-10
+
+*        Bromine reactions
+[e0]       ch3br + oh -> ho2 + br + h2o    ; 4e-12, -1470
+[e1]       chbr3 + oh -> h2o + 3*br        ; 1.6e-13, -710
+[e2]       br + o3 -> bro + o2             ; 1.7e-11, -800
+[e3]       bro + o3p -> br + o2            ; 1.9e-11, 230
+[e4]       bro + no -> no2 + br            ; 8.8e-12, 260
+[e5a]      bro + clo -> oclo + br          ; 9.5e-13, 550
+[e5b]      bro + clo -> br + cl + o2       ; 2.3e-12, 260
+[e5c]      bro + clo -> brcl + o2          ; 4.1e-13, 290
+[e6]       bro + bro -> 2*br + o2          ; 1.5e-12, 230
+[e7]       br + ho2 -> hbr + o2            ; 1.5e-11, -600
+[e8]       br + oclo -> bro + clo          ; 2.6e-11, -1300
+[e9]       br + ch2o -> hbr + co + ho2     ; 1.7e-11, -800
+[e11]      oh + hbr -> h2o + br            ; 1.1e-11 
+[e13]      bro + no2 + m -> brono2 + m
+[e15]      bro + ho2 -> hobr + o2          ; 3.4e-12, 540
+[e71]      o1d + hbr -> oh + br            ; 1.5e-10
+[e72]      bro + oh -> ho2 + br            ; 7.5e-11
+[e81]      o3p + hbr -> br + oh            ; 5.8e-12, -1500
+[e91]      ha1301 + o1d -> br + 3*hf       ; 1e-10
+[e92]      ha1211 + o1d -> br + cl +2*hf   ; 1.5e-10
+[e93]      ch3br + o1d -> br               ; 1.8e-10
+
+*        Oxygen reactions
+[hk1]      o3p + o3p + m -> o2 + m
+[hk2]      o3p + o2 + m -> o3 + m
+[hk3]      o3p + o3 -> 2*o2                ; 8.0e-12, -2060
+[hk4]      o1d + n2 -> o3p + n2            ; 1.8e-11, 110
+[hk5a]     o1d + o2 -> o3p + o2            ; 0.736e-11, 70
+[hk5b]     o1d + o2 -> o3p + o2s           ; 2.464e-11, 70
+[hk7a]     o1d + o3 -> 2*o2                ; 1.2e-10
+[hk7b]     o1d + o3 -> o2 + 2*o3p          ; 1.2e-10
+[hk8]      o2dg + o2 -> 2*o2               ; 3.6e-18, -220
+[hk9]      o2dg + n2 -> o2 + n2            ; 1.0e-20
+[hk10]     o2dg + o3p -> o2 + o3p          ; 1.3e-16
+[hk12]     o2s + n2 -> o2dg + n2           ; 2.1e-15
+[hk13]     o2s + co2 -> o2dg + co2         ; 4.2e-13
+[hk14]     o2s + o3 -> o2dg + o3           ; 2.2e-11
+[hk15]     o2s + o3p -> o2dg + o3p         ; 8.0e-14
+[hk16]     o2s + o2 -> o2dg + o2           ; 3.9e-17
+[hk21]     o1d + n2 + m -> n2o + m
+[hk30]     o2dg -> o2                      ; 2.58e-04
+[hk31]     o2s -> o2                       ; 0.0758
+
+*        Aerosol, particle reactions
+[g1]       clono2 -> hocl + hno3
+[g2]       n2o5 -> 2*hno3
+[het1]     clono2 -> hocl + hno3
+[het2]     clono2 + hcl -> cl2 + hno3
+[het3]     n2o5 -> 2*hno3
+[het4]     n2o5 + hcl -> clno2 + hno3
+[het5]     hocl + hcl -> cl2
+[PMChet1]  clono2 -> hocl + hno3
+[PMChet2]  clono2 + hcl -> cl2 + hno3
+[PMChet3]  n2o5 -> 2*hno3
+[PMChet4]  n2o5 + hcl -> clno2 + hno3
+[PMChet5]  hocl + hcl -> cl2
+
+   Endent
+
+* these are the washed-out species; may not necessarily have 
+* any heterogeneous reactions 
+
+   Heterogeneous
+      hno3, h2o2, ch3ooh, hcl, ho2no2, ch2o, hbr
+   Endent
+
+   Ext Forcing
+      h2o
+   Endent
+
+   ENDPAR
+
+   SIMULATION PARAMETERS
+
+     Spatial Dimensions
+        Vertical   points = 121
+        Latitude   points = 35
+        Longitude  points = 8
+     Endent
+
+     Numerical Control
+	Jacobian iterations = 3
+	Implicit iterations = 6
+     Endent
+
+
+     Version Options
+	machine = dec
+	modules = on
+	namemod = on
+     Endent
+
+     Job Control
+        Simulation length = 1d
+	Simulation Time Step = 1200
+     Endent
+
+   ENDPAR
+ENDSIM

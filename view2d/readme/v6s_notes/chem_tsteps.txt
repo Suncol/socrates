@@ -1,0 +1,64 @@
+              Variables, modules and files relative to the 
+       tunable chemical timesteps implemented in SOCRATES v6s33
+       --------------------------------------------------------
+       
+                         Simon Chabrillat (simonc@oma.be), Nov. 5, 2001
+                         
+In brief: look at the files  
+
+src/sim_cont.mod.f (module SIM_CONTROLS)
+src/chem.mod.f (module CHEM_TIMES)
+src/pho.mod.f (module SOLDAY)
+src/numerical.mod.f (routines HPSORT, SPLINE and SPLINT)
+src/sol_day.f
+src/sun_position.f
+src/chemdr.f
+src/setpht.f
+src/heat_rates.f
+
+----------
+                         
+Setting the chemical timesteps is easy. It is done through 3 variables:
+ "chemdtm", "nextra" and "extradtm", defined in the module SIM_CONTROLS 
+("src/sim_cont.mod.f") and set by the input namelist control_parms
+(defined in "src/main.f", see exemple in "socrates.inp").
+"chemdtm" sets the constant timestep, in minutes (default value: 60.).
+"nextra" sets the number of special timesteps before and after sunrise or 
+sunset (default value: 10). "extradtm" sets the time of these special timesteps
+using the sunrise/sunset time as the zero reference. For exemple, if we
+write in "socrates.inp":
+ chemdtm = 60.
+ nextra = 4
+ extradtm(1:4) = -5., 0., 5., 15.
+We will get 24+2*4=28 timesteps per day: the 8 special timesteps will happen
+5 minutes before sunrise, at sunrise, 5 minutes and 15 minutes later, and the
+same for sunset.
+
+The corresponding solar local times are computed in "src/sun_position.f",
+called from "src/sol_day.f". SUN_POSITION computes the variables defined in 
+the module CHEM_TIMES (file "src/chem.mod.f"), especially "slt" and "nt", which 
+will be used in src/chemdr.f (main routine for the chemical solver).
+Notice that SUN_POSITION uses the sorting routine HPSORT contained in the 
+module file "src/numerical.mod.f".
+
+The important thing for this new algorithm is the interpolation of the J 
+(and solar heating rates) from the two computed values per day to the chemical
+times. We basically interpolate the *logarithms* of the J as a function of
+the *secant/Chapman* of the Solar Zenith Angle (SZA). 
+
+The two central routines for these interpolations are "src/sol_day.f" and 
+"src/setpht.f". SOL_DAY computes the J variables "logjk" and solar heating 
+rates variables "logpshk" at the two times of the day corresponding to the old 
+versions. These variables are defined in the module "SOLDAY" 
+(file "src/pho.mod.f"). SOL_DAY also computes the second derivatives "logjkd2"
+and "pshkd2" respective to the secant/Chapman of the Solar Zenith Angle. 
+
+The main routine for the chemical solver is still CHEMDR. Notice
+the new  diurnal chemistry time loop: "do it = 1, nt(lat)".
+In this loop, CHEMDR calls SETPHT to interpolate "logjk" to the actual 
+time-dependent "pht_rates", and a little later it calls HEAT_RATES to 
+interpolate "logpshk" to the actual, time-dependent "solheatl"
+(HEAT_RATES also computes the chemical heating rates, "chemheatl").
+
+Notice that we use the routines SPLINE and SPLINET contained in the module 
+file "src/numerical.mod.f".

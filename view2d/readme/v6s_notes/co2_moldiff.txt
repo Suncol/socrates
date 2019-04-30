@@ -1,0 +1,65 @@
+               CO2 parameters for molecular diffusion
+               --------------------------------------
+Text writtent for Kaufmann and finally not sent 
+(see sent version on Oct 24, 2002 in Inbox):
+
+------------
+Considering that solar activity was almost minimal during CRISTA-1,
+I can see 3 ways in which models would fail to get the right
+CO2 distribution:
+
+- A missing process. Tides are not (and can not) be represented in
+our 2D-model. But TIME-GCM does have tides, and fails also.
+I do not see any other process missing. Photodissociation is taken
+in account, and we have seen that its effect is negligible.
+
+- Kzz too large. This is the most obvious. But you show that Kzz has 
+to be reduced by 5 or 10 to only get *closer* to the CRISTA obs.
+Such a small Kzz would create problems when comparing model with 
+measurements of other species. Plus, it does not change the homopause
+altitude: +/- 85km with SOCRATES, vs 75km from CRISTA obs.
+
+- A wrong molecular diffusion coefficient (Di = A*(T**s)/n).
+In case you calculated Di using the parameters A and s reported in my 
+thesis, please note these are wrong 
+(misstyped, the values used for my GRL paper are correct).
+The correct experimental parameters are A=6.42e16 and s=0.735 
+(for Di in cm2/s), as reported in Banks/Kockarts-1973b p. 40, 
+who themselves copied it from 
+Mason,E. and T.Marrero, The diffusion of atoms and molecules,
+in Advances in Atomic and Molecular Physics, edited by D.Bates 
+ and I.Esterman, vol.6, pp.155-232, Academic Press, 1970 .
+I feel that there is some real room for improvement there.
+------------
+
+Further comments for myself:
+
+Up to v6s30, I used the rigid spheres approx (B&K 1973, vol.2,p.38):
+D12=1.52e18*SQRT(T*(1/44+1/wmole))/n . Beginning at v6s31, I used
+the formula D12 = A*T**s/n since the coeffs A and s, experimentally 
+measured by Mason/Marrero-1970, were given by B&K 1973b (p.40) for CO2:
+A=6.42e16 and s=0.735 . This experimental val yields D12 +- ??% different
+than using rigid spheres approx 
+(can not get view2d/user_functions.pro to work reliably)
+In v6s_diary.txt, it is written that this results in CO2 bigger by 15%.
+
+Furthermore, alphat was changed from 0 to 0.1 at v7s04c (changed also in v6s39
+comared w/v6s38). This new value, from Bernhardt-1979, didn't seem to change 
+the result by much.
+
+Since the CRISTA-1 obs (Kaufmann/et-al-2002) show much steeper vert grad
+for CO2, even when decreasing Kzz in SOCRATES 
+(see also Kaufmann's email, oct 2002), I suspect that A and s, or alphat,
+are not correct.
+
+Furthermore, the UBC for CO2 *must* be changed, from flux=0, to the values 
+measured by CRISTA at 110km (z*=120km): 40ppm. 
+v6s39a test, comparing with v6s38f: globally averaged CO2 gets significantly 
+smaller (F-B<-10ppm) only above 100km ; On Nov.7, 30°N (as CRISTA1 obs in PDF 
+file emailed by Kaufmann, OcT 24,2002): the gradient is not so much changed,
+vmr=250ppm at zgeo=100km (CRISTA-1 obs:+-120ppm).
+So most of the change arises above mesopause. Winter mesopause gets too warm
+(beacuse of CO2 decrease). I could try adjusting dyn F_GW, but I should rather
+set UBC(CO2) as flux to get 40ppm in global avg, with different flux 
+in polar night.
+only above 100km (does not 

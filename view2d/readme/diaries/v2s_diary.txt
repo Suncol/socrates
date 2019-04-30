@@ -1,0 +1,128 @@
+Version history for SOCRATES 2D model development - Simon Chabrillat
+____________________________________________________________________
+
+
+v2.0 - WORKS
+------------
+
+ Programming enhancements:
+- compiling source with -O3 for exec speed, doesn't seem to change results.
+- CHECK_VARS subroutine checks O2, q, w (see MAIN). 
+- nlon made increasable again (main.f initialiation, DIURNAL_PARMS module)
+- useless try and trx (TRELAX module) removed
+- main.f : removed SMOOTH of srheat3
+- adj_nox.f removed altogether
+- Using netcdf 3.3.1 always, upgraded netcdf_utils.mod.f and netcdf33.mod.f 
+  to netcdf3_utils.mod.f, linking on hal to /home/simonc/libnetcdf331.a
+- archiving:
+  arch.f split to ncdf_arch.f and ncdf_save.f; diuvarch.f moved to 
+  ncdf_diuvarch.f. dvarchsw renamed diuvarchsw (module SIM_CONTROLS)
+  new io_namelist input: arch_chem_lev (module SIM_CONTROLS), is an int var from 
+  0 (default, smallest number of archived species) to 3 (all computed species are
+  archived). Level 1 adds PSC/ozone hole-realted species, level 2 even more
+  (bromine), level 3 organic species. Implemented in nc_arch.f and nc_diuvarch.f
+- Subroutine CGEFA slightly modified (for HP f90 v2.0 compile) and renamed
+  CGEFA_F90. Same for CGEFI to CGEFI_F90. All put in file numerical.f .
+- calc_chem_rates -> chem_rates_var ; const -> chem_rates_const 
+  secjou.f -> secjou_chap.f ; eddy.f removed ; effic (eff.f) -> sol_heat_effic
+  kockart-> kockarts94 ; no_phot (minsch.f) -> minschwaner93 ; 
+  nwind -> zonal_wind ; pho_stam (pho.f) -> pho_plug
+  All numerical subroutines grouped in numerical.f
+  All checking routines grouped in checks.f (moved CHECK_* from utils.f)
+- new C-shell script for long runs: Bigrun.csh. Executes in specific temp dir,
+  input namelist file inclided in Bigrun.csh
+- Trying a long run with archiving 4 times a month (once every 18 5-days
+  timestep), found artifact decrease due to time sub-sapling. Solution:
+  replaced ran_printout(50), ran_archive(50), ran_dvarch(10) and ran_save(50) 
+  by annual_printout(12), annual_archive(12), annual_diuvarch(12) and
+  annual_save(12). These variables remain of type TIMING but their functionality
+  changes: independently of the year, if the current simulation day of the year
+  matches one the 12 days of year specified, then printout, archiving,
+  diuvarchiving or saving are executed. 
+  Modified MAIN, CHECK_IO, CHECK_IO_TIMES, DO_IO. Found a bug in CHECK_IO
+  (if PRESENT ran_times, if mode == days then ran_times%days0 = 
+    sim_start_time%days0 + ran_times%CAL_day instead of ran_times%day)
+    
+  Did a 30-years run : v2.0_bigrun.arch.nc, from Jan/1/2018 to Dec/21/2047
+  Results: long-term drift of most contituents and temperature, eg for T at
+  90km, equator, the baseline decreases from 200K to 188K and the annual 
+  amplitude decreases from 18K to 12K.
+  Drift of constituents may be caused by non-conservative SLT, needs tracers to
+  test, but tracers explode after 4 months of sim since they were introduced.
+  sometimes downwards
+
+v2.1
+----
+
+Fixed the tracers problem by removing all special instructions in chemdr.f
+(these were: always converged, exit spcno loop, but tracers still changed
+because of sunrise guess for qn2(t1)=an2(t0,lat+/-1) - this diverged - why??). 
+Had to initialize pr, pe, ql to zero in chemdr.f before PROD_LOSS calls, 
+initilization in local var declaration didn't prevent tracers from going 
+garbage at one: why?. 
+Useless restrt, startup, first_day removed from chemdr.f .
+main.f modified: increased user control of initial conditions by 2 new parms in
+namelist control_parms: adjust_ic and set_ic, used after READ_SAVE. see
+describe_sim.f
+tracer behaviour: The tracers stay now perfectly constant after 2 years when 
+beginnin with a spatially constant distribution.
+
+v2.1a : Added subroutine WRITE_GLOBAL_COUNT (print_utils.f) and funtion 
+GLOBAL_COUNT (chem_subs.f) to get total number of molecules of any diagnosed 
+species (main.f). main.f : removed smoothing of Ox family members abobe 44km;
+new parameter floor=1e-30 is min val of all vmr throughout main.f (including
+initialization).
+Results: removing Ox members smoothing changes A LOT polar night behaviour: 
+O3 crazy vert profile "opposite" in strato; O(3P) much nicer, all previous
+versions had discontinuities at 44km; BUT...
+After 5 simulation months : O2 decreases in polar night upper strato 
+because of descent of oxygen-poor mesospheric air (see tracer2 and w) so much 
+that goes < 20.5% at 60km, ilat=1; Removing CHECK_VARS(O2 below 60km): doen't go
+much below 20.5%, runs OK.
+tracer behaviour: tracer1 began in tropo north, january. Propagates OK, total
+number of molec goes from 1.276e31 to 1.268e31 over 2 years of sim.
+tracer2 began at south pole, 10 highest km. Total number of molec goes from
+1.046e27 to 1.464e27 !! Weird blob remains after tracer2 goes down in strato 
+polar night, probably due to bad overall wind field (wave param not correct,
+being fixed by A. Smith).
+
+v2.1b: wanted to test if responsible process for lack of mass conservation is 
+slt.f. Run identical to v2.1a, i.c. for tracer2 unchanged and set same i.c. for 
+tracer1. But tracer2 frozen in SLT. Now tracer1 & tracer2 begin with 1.046e27, 
+tracer1 goest to 1.464e27, and tracer2 goes to 1.007e27. 
+SLT NOT CONSERVATIVE, WORST AT HIGH ALTITUDES.
+
+v2.1c: added a scaling "fixer" factor inside slt.f to force it to be globally
+conservative. Began putting all diagnosing/freezing code lines in src/diags dir,
+with "include 'diags/...'" in src code.
+tracer behaviour: 
+
+
+To do list, science:
+____________________
+
+- Advection at surface with slt.f: check w/Guy and Stacy if the line in TRAJBC:
+          z(l,iz) = MAX( z(l,iz), .5001 )
+  is OK. JF finds it very weird that air parcel at surface is set to always 
+  originate from point at 500m altitude even with wind=0 at surface.
+- awmole and Cp set to constant values in module BACKATM: calculate them
+  interactively with MSIS.
+- use this Cp in solar and chemical heating as in Fomichev's CO2 cooling
+- set CO2 to real value (not zero) in PHO_STAM - test in OFFONED first.
+- crs97.dat, crs(jh2o) at ly-a: still 1.44e-17 instead of 1.53e-17 as in 
+  offoned/data
+- Enhance chem_heat formulation as in Rev3b
+- Enhance solar UV heating with wavelength separation between methods instead 
+  of 60km altitude limit - test in OFFONED first.
+- Try fluxes at u.b.
+- Make u.b.c. diurnal time-dependent
+- DATAIN in ccmrd1_aero.f uses faco2 instead of qn2da(co2) !!
+- Try again to merge the two 5 day-loop in one (see Rev6).
+
+To do list, programming:
+________________________
+- Optimize execution speed: lots of time spent in MAXVAL, MAXLOC, MINVAL, MINLOC
+  in the chem routines. Execute these statements only if debug == .true.,
+  when possible
+- CHEMDR not converging!? Check with diag=.true., diag_procname='CHEMDR',
+  diag_all_chemsteps=.false. in next long run.

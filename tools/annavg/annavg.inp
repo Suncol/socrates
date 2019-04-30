@@ -1,0 +1,6 @@
+ &io_parms
+ in_file = '/data1/simonc/socrates/cospar/v7s09a.heat.nc'
+! varname(1:8) = 'temperature','totdens','SolHeat','ChemHeat','qcool','ch4','co2','h2o'
+ varname(1:9) = 'totdens','UVSol_O3','IRcool_H2O','IRcool_O3','IRcool_CO2','o3-noon','o3-night','h-noon','oh-noon'
+ out_file = '/data1/simonc/socrates/cospar/annavg/v7s09a_aa.heat.nc'
+/

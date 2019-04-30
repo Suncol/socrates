@@ -1,0 +1,49 @@
+Improvements between Rashid's last public version (v3cII51) and Simon's last
+                     version (currently v6s15)
+                     
+                     =========================
+                     
+The important improvements
+--------------------------
+                     
+v4s008: ubc from MSIS for T and (in later versions) O, O2, H - explicit F107 fct
+v4s016: Added cooling by H2O rotational bands
+v4s025: new calculation of u - removes u discont & w time instability
+v5s07:  new param for GW: Hines (1997)
+v5s09a: fixer in SLT for global mass conservation
+v6s01-v6s06: 
+        tunable chem tsteps, as cst + extra at sunrise & sunset
+        J's still calc 2*/day, 3rd val = 0 for sza=95°, cubic spline interp
+v6s12:  implemented O2(1DeltaG) & O2(1Sigma) chem, gave arch to Jan Kazil
+v6s17:  Tuned special prods of NO; consistent solar activity forcings
+
+
+Less important improvements
+---------------------------
+
+Never used relax from interactive to MSIS temperatures above 30km, except
+   in specific simulations
+v3s67: Lyman-alpha param
+v3s68: Added IR cooling by NO
+v4s019: Winds/T calc looped dyn_steps times per day (dyn_steps=12 at v6s15)
+v4s029: One 5-days loop for tdyn & chem 
+v4s031: solheat effic, chemheat and fomichev's qcool down to 25km  (surf in v6s15)
+v5s01: preprocessor outputs only necessary code (in preprocessed.f and preprocesed.mod.f)
+v5s05: inert tracer X
+v5s17: JPL2000 update
+v5s21: 11-yr sinus cycles for solar Lyman-alpha & F10.7 (-> MSIS UBC)
+v6s07: archives instantaneous chem lifetimes at sunrise & sunset
+
+"Improvements" by Rashid in v3cII51 rejected for dvpt of v6s015
+---------------------------------------------------------------
+
+Switching off transport by convections & fronts (non-conservative) (v5s11)
+Removed PSC/PMC chemistry and clouds calculations (v6s03)
+   Keeping only max of tropo h2o from relhum & washout processes
+Removed NCAR CCM1 param for tropo heat/cool, halved clh
+
+Improvements by Simon adopted in by Rashid for v3cII51 or later versions
+------------------------------------------------------------------------
+
+fomichev98.f, including qcool by O3 ( v2.1c )
+Major bug on solar flux ( v4s029 )

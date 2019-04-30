@@ -1,0 +1,27 @@
+ &control_parms
+ model_type = 'two_d'
+ start_from = 'newnc'
+ sim_start_time = 2003, 12, 17, 0, 0.
+ sim_stop_time  = 2008, 12, 31, 0, 0.
+ ncpus = 64
+ daypas = 5
+ chemdtm = 30.
+ mainsw(8) = 2			! QBO param: 0-none ; 1-diabatic heating; 2-effective forcing ; 3-tropical wave forcing
+/
+ &io_parms
+ data_dir = './data_in/'
+ rstrt_filespec = './data_in/v7s11_1996-12-17.save.nc'
+ arch_dir = './data_out/qbo/'
+ label_short = 'qbo'
+ label_long = 'socrates7.18.1'
+!
+ arch_set(1)  =   'chem', 2003, 12, 17, 0,0.,  2008,  12,  31, 0,0., 30
+ arch_set(2)  =   'heat', 2003, 12, 17, 0,0.,  2008,  12,  31, 0,0., 30
+!
+ arch_month_avg = .true.    !# create another netcdf output file containing monthly averages for all chem species and each simulated month
+/
+ &diag_parms
+ diags = .false.    !# .true. for very verbose stdout and to write diurnal variations to  ASCII output file *dvout_yyyymmdd.nc.dat
+ ldiag = 28         !# latitude index of output values written in stdout and in ASCII output file *dvout_yyyymmdd.nc.dat
+ zdiag = 56         !# altitude index of output values written in stdout and in in ASCII output file *dvout_yyyymmdd.nc.dat
+/

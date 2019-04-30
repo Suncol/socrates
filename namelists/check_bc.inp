@@ -1,0 +1,25 @@
+ &control_parms
+ model_type = 'one_d'
+ jump_chem = .true.
+ start_from = 'newnc'
+ sim_start_time = 1999, 1, 1, 0, 0.
+ sim_stop_time  = 2005, 1, 5, 0, 0.
+ ncpus = 1
+ daypas = 5
+ chemdtm = 720.
+/
+ &io_parms
+ data_dir = './data/'
+ rstrt_filespec = '/home/simonc/socrates/saved/v7s09_1954-1-1.save.nc'
+ arch_dir = '/home/simonc/scratch/'
+ label_short = 'test2'
+ label_long = 'testing UBC'
+!
+ arch_set( 1)  =  'heat', 1943, 12, 17, 0,0.,  2018,  4, 11, 0,0., 10
+/
+ &diag_parms
+ debug = .false.
+ diags = .true.
+ ldiag = 27
+ zdiag = 81
+/

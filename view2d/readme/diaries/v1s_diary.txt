@@ -1,0 +1,214 @@
+Version history for SOCRATES 2D model development - Simon Chabrillat
+____________________________________________________________________
+							
+
+v1.0 : WORKS
+------------
+Theresa Huang's final version before she leaves (see huangt email mar 25 1998).
+Lindzen's param of GW is default. The original tar file is "socrates2.tar.gz".
+Bug in gravity.f corrected before first local run (see huangt email mar 27 1998,
+subject: "modif to src code"). gravity.f also has now an exponential decrease 
+with latitude of fx and xkz. Module netcdf.mod.f should be compiled instead of
+netcdf33.mod.f as of 4/1/1998, or else run time error with NCCRE netCDF fct.
+Results: 5-year long run successful, with all default input parms.
+sum of all vmr reaches 1.2 .
+Vert profile of H, O, H2 look nice due to m.r. upper boundary conds.
+Min mesopause temp raised from ~150K (in rev3b) to ~170K, mesopause Kzz 
+concentrated in tropics, with max at ~15m2/s 10 times smaller than using Fritt's 
+parmaeterization. Much smaller latitudinal gradients of mesospheric temp.
+All these meso flaws probably due to Lindzen's paramaeterization (read Gary 
+Thomas & Bob Portmann work). But Lindzen much better for Kzz in strato.
+gravity.f will need to be tuned (amplitudes at surf, make it well dependent of
+lat and season).
+
+v1.1 : FAILS
+------------
+O2 calculation implemented as was in Rev3b. Submitted v1.0 to all related 
+changes between Rev2c and Rev3b, especially ic_o2 index, O2 calculation above
+izme=72, and m.r. scaling for sum=1 above izme in it_conserv.f .
+Check on unrealistic temperatures added in main.f .
+Added new module DIAG_CONTROLS to streamline diagnostics. Routines to diagnose 
+must be named in DIAG_CONTROLS, output file diag.out can be followed with 
+hal:> tail -f diag.out
+Results: the scaling factor in it_conserv.f can reach 1.3 at u.b. polar night.
+If it_conserv multiplies hnm (=hm2d) by scale 8*/day, hm2d raises so much that q
+goes "crazy" hence t2d too (neg values).
+So it_conserv.f will now scale only the m.r. (mr = mr/scale), not the totdens
+(hnm=hnm*scale) any more, although this was working in Rev3b.
+Real bug to correct: in sol_chm_heat.f, sol_heat1 now multiplied by qn2(ic_o2)
+instead of xmixo2, but using averages one has to mult. by .5 (as sol_heat2).
+Still, After 6 mo, T crash due qcool=0 above 90km due to null CO2.
+
+v1.2 : WORKS
+------------
+CO2 in v1.1 goes to 0 because *all* very-long-lived species decreased enormously
+above 90km, due to repetitive scaling by IT_CONSERV.
+So it_conserv.f now scales only O, O2, H (and re-sums ox, hox) even though this
+can't ensure sum(m.r.)=1.
+Result: this works fine!! The only problem is that O2 goes down to 5%, eg at 
+simulation beginning, ilat=30, iz=117
+
+v1.3 : WORKS
+------------
+Diags and IC settings to find out why sum_vmr keeps getting > 1.
+After reading initcond.nc, using MSIS (msis.mod.f, msis_plug.f) to get constant 
+distribs(lmax,niz) of N2, He, Ar, initial O2, b.c. on O(3P), O2 . Rescale all
+*other* species (SUM_VMR_1) to get sum=1.
+Found that SUM_VMR get > 1. after SLT. Will have to set w to 0. at 120km.
+Diagnosing O2 in SLT and DIFFUS_VERT:
+- SLT decreases O2 with w<0., so why does SUM_VMR increase? Which species?
+FOUND BIG BUG IN SUM_VMR. This bug was around from the beginning of all scalings
+to get sum_vmr=1, and made the sum overevaluated: when calculating the sum, I 
+was taking in account the families, hence putting the same speices several times
+(especially O(3P) and Ox in the upper part). Excluding these families, the sum
+remains much closer to 1. Get very nice O(3P) and O2 results.
+Problem with CO2 increase at 115km, probably due to SUM_VMR_1 (discontinuity at
+izme) - lots of other species in Cly and Bry are influenced badly by SUM_VMR_1 .
+
+v1.4 : FAILS
+------------
+Reason for CO2, Cly, Bry problems above: they are not subject to MOLDIFF since
+v1.0!! - add ALL species in MOLDIFF. Fixes problem, eg CO2 now *much* better,
+but discontinuity at 70km, reason: MOLDIFF begins at 60km, and has effect at
+once because xkz by Frindzen too small -> use the same izme=61 for MOLDIFF,
+SUM_VMR_1 and O2 calculation, place izme in new module ALT_LIMITS in 
+main.mod.f, apply MOLDIFF and SUM_VMR_1 to (almost) all species . 
+Result: crashes because scaling makes O3 disappear between 60(=izme) and 40km,
+polar night. This begins after 1.5mo, O3 reaches zero after 4mo, simulation
+crashes after 6.5 mo. 
+Added a new diagnostic tool: 2 chemically inert tracers ("tracer1" and 
+"tracer2") for indexes 11 and 12, try first with constant "m.r."=2. and null 
+fluxes. tracer1 was scaled by SUM_VMR_1 even though not 
+taken in account for the sum, yields "crazy" results (vals between 1.8 and 2.e8
+at crash time). tracer2 not in SUM_VMR_1, and values stay perfectly at 2 above
+20km -> CONSERVATIVE scheme!! Some unknown tropo process makes tracer2 increase
+to 480 in the troposphere, but this happens suddenly after 5mo!
+
+v1.5 : FAILS
+------------
+iz=101,ilat=1 : CO2 smaller -> qcool smaller -> q bigger -> wd1(niz) bigger
+and wu = wd1 -> w more negative (WHY? fx closer to 0!) -> CO2 decreases 
+(low thermo CO2 goes down) -> qcool decreases -> T increases, 
+PLUS downward w heats by itself. from march 7 to march 17, w at (1,121)
+suddenly switches from upward to downward. SOLUTION: wet wu = 0. instead of wd1 
+in main.f - it *does* set w=0 at u.b.!
+Result : still crashes, only 2 mo later - but the new CO2 seems right compared
+with litterature (Rodrigo et al.) even though it doesn't cool enough the
+thermosphere!? 
+Additional diagnosing/study tool : module FREEZE_CONTROLS in controls.mod.f 
+contains freeze_qn2_procname(nbcon2max,20) and freeze_qc_procname(ncm2max,20) .
+These vars added to namelist CONTROL_PARMS. 1st index is species index, the line
+contains subroutine names where that species should be not modified, or should
+not be used (using some cst profile instead). This new feature used at once to
+remove advection of CO2:  freeze_qn2_procname(co2,1) = 'SLT' in CONTROL_PARMS.
+Result : still fails! Stopping CO2 from being advected didn't change much in the 
+resulting CO2 profile, wich is *right*, but at aug 16 (8 mo after simulation
+begins), qcool which was until then 4* smaller than in v1.0 (where CO2 was not
+subject to molecular diffusion) suddenly increases (not everywhere,at 25S,
+108km), and T increases (is it qcool increases because T increased?) and T
+suddenly goes berzerk.
+
+v1.6b : WORKS AND FAILS
+-----------------------
+CHECK_VARS subroutine checks H2O and O3 as in CHRCMS.
+To check if the problem is really in qcool calculation, CO2COOLNEW can now use
+input values independent of SOCRATES: O, O2, T from MSIS and for CO2 a 
+fixed m.r. of 3.5335e-4 when specifying freeze_qn2_procname(co2,1) = 
+'CO2COOLNEW', even though CO2 is still calculated right (and advected again). 
+Previous versions were using always O2 from MSIS, was not updated -> january 
+values even in august when crashed. 
+a) Result with al CO2COOLNEW input values interactive: still crashes as
+v1.5, same date/alt/lat, seems to be caused by bad O(3P). Problem with upper v.
+b) Trying with O2 and O from MSIS (O null below 75km!): crashes the same way, 
+actually begins 20 days sooner! -> trying w/ CO2...
+b) Trying with CO2 input to CO2COOLNEW always = 3.5335e-4 everywhere
+-> fixes nicely the temperature problem, T is excellent, qcool too!
+But... Crashes at Jun/30/1996 in PROD_LOSS_DAY, probable reason: O2 suddenly
+shows discontinuity at 60km, beginning Jun/15/1996, at 60km min val. of 16%.
+Sols: restrain DIFFUS_VERT for O2 to calc. from 60-120km, with lb mr cond
+at 60km.
+
+v1.7 - WORKS
+------------
+Added H, N, Tmsis from MSIS as u.b.c. Found a minor bug in CO2COOLNEW where
+xmixo2 was still used in inner routine. Hoped the fix would allow using
+qn2da(co2) as input to CO2COOLNEW. Fails after 8 months, *even though starting
+date is 7/15/1996* . So, one *really* needs in input namelist CONTROL_PARMS:
+ freeze_qn2_inproc(27,1) = 'CO2COOLNEW'
+... and if not typed, it *always* take 8 months for the instability to crash!
+a) Fomichev et al., J.Atm.Terr.Ohys. Vol.55,p.13,1993: kO, the quenching rate 
+of excited CO2 by O (rko in co2.f) has recommended val of 3.5e7 (1/atm/s), but 
+rko=0.5e7 until now, could explain values of qcool too low. 
+Setting rko=3.5e7 in co2.f .
+Result: excellent, no temp thermospheric problem any more, O2 crash still
+b) O2 calculated at all altitudes; Results: O2 decreases to 16% in 10 days, 
+polar day, 48km, due to chemistry only. PHO_STAM has interactive O2 
+(+FREEZE_CONTROLS). Results: same. 
+
+v1.8 - WORKS GREAT
+------------------
+FOUND BUG: Theresa's version-> jo2 = jo2 + jo2_o1d and jo3 = jo3 + jo3_o1d in 
+PHO_STAM!! O2 loss took jo2_o1d twice! O3 loss took jo3_o1d twice (probable
+cause for O3 strato decrease in polar regions)! O(3P) and NO2 prods took 
+jno3_o2! NO3 loss took jno3_o2 twice! Corrected pho.f, day_sub.f, 
+prod_loss_day.f. jo2 mean jo2_2o3p, jo3 means jo3_o3p, jno3 means jno3_o3p .
+Result: O2 at 48km, ilat=1 decreases to 19% in 10days, so decreases TWICE less
+(!? check jo2/jo3 more !?). Replaced o2(:) in chem routines by ck(:,ic_o2). 
+Found bug for a6b O2 prod in PROD_LOSS_DAY. Not important.
+a) FOUND "BUG"(?): O2 strato loss not in polar night. Checking SOL_DAY: 
+Theresa added since her Rev35 a piece of junk code to advance the latitude of 
+terminator to 5 degrees sooner where J's are set to zero. Maybe a bug there.
+Replacing SOL_DAY from v1.0 by SOL_DAY from Rev3b. Results: no change.
+b) FOUND BUG IN O2 PROD: forgot O3+hv->O2+O !! forgot all J's in O2 prod!
+PROD_LOSS_DAY corrected.
+Result: O2 now fine except at izme=60km where local discontinuity caused by
+SUM_VMR_1. Crashes in PROD_LOSS_DAY after 1.5yr
+c) Re-trying with no scaling by SUM_VMR_1 (except for initcond), but checking 
+by SUM_VMR. Works great.
+
+v1.9 - WORKS
+------------
+Added Cp in module BACKATM: Cp is a constant alt-dep profile for specific heat 
+at cst p, (J/g/K). Used only in FOMICHEV93 (see below) at 120km.
+Slightly enhanced code in co2.f (param of CO2 cooling by Fomichev et al, 1993),
+and renamed it to fomichev93.f and fomichev93_data.f. kO, the quenching rate 
+of excited CO2 by O (rko in co2.f), renamed to kOqCO2, can be set in namelist,
+set to 3e-12cm3/s. All this to test and compare with Fomichev et al 1998 (see
+below). co2_cool.f renamed to cooling_rates.f (q4 not smoothed any more,
+q(41:niz) calc in main).
+Results: works fine. qcool and T slightly different at mesosphere. 
+Stratopause temp higher than in v1.8c
+a) Added FOMICHEV98 param. Switch between fomichev93(n8=0) and fomichev98(n8=1).
+Results: at normal CO2 levels, temp slightly lower with Fomichev98 .
+
+
+
+
+Development continues with v2.0 in myversions_v2.txt
+
+
+
+
+
+To do list, science:
+____________________
+
+- awmole and Cp set to constant values in module BACKATM: calculate them
+  interactively with MSIS.
+- use this Cp in solar and chemical heating as in Fomichev's CO2 cooling
+- set CO2 to real value (not zero) in PHO_STAM - test in OFFONED first.
+- crs97.dat, crs(jh2o) at ly-a: still 1.44e-17 instead of 1.53e-17 as in 
+  offoned/data
+- Enhance chem_heat formulation as in Rev3b
+- Enhance solar UV heating with wavelength separation between methods instead 
+  of 60km altitude limit
+- Try fluxes at u.b.
+- Try strcal_lb_new.f instaed of strcal_lb.f (current fct x interpol to zero at
+  120km)
+- Make u.b.c. diurnal time-dependent
+- DATAIN in ccmrd1_aero.f uses faco2 instead of qn2da(co2) !!
+- Try again to merge the two 5 day-loop in one (see Rev6).
+
+To do list, programming:
+________________________
+- Merge small files.

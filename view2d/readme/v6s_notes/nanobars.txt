@@ -1,0 +1,28 @@
+Theresa,
+
+In the IDL application, to convert 'vmr' units to 'nanobars' units,
+add this in the file selecter.pro:
+
+- just before the line>      'vmrSwitch' : BEGIN  , add the instructions:
+
+
+     'nanobars'  : BEGIN
+                     If (last.plot2d eq 'depth-x') then Begin
+                        junk = DIALOG_MESSAGE(  $
+                          'conversion to nanobars not implemented in time-latitude view', /ERROR)
+                      Endif Else If (zl.units ne 'molec/cm3' and zl.units ne 'vmr') then Begin
+                        junk = DIALOG_MESSAGE('current variable not a chemical species', /ERROR)
+                      EndIf Else Begin
+                         If (zl.units eq 'molec/cm3') then zl.matrix = zl.matrix / arch.totdens(*,*,depth_id)
+                         For il = 1, x.dim-1 Do zl.matrix(il,*) = zl.matrix(il,*) * yp.coord(*) * 1.e3
+                         zl.units = 'nanobars'   &   autoscaler   &   redo_last
+                     EndElse
+                   END
+
+
+- just before the line>      molatfixlev_id = WIDGET_BUTTON(plot2d,                 $ , add:
+
+   junk = WIDGET_BUTTON(plot2d, Value=                    $
+                              'vmr -> nanobars (partial pressure)', Uvalue='nanobars')
+
+                     Simon.

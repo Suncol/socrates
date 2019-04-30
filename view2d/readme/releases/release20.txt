@@ -1,0 +1,105 @@
+Hello everyone !
+
+I have developed a new version of the model, primarily to fix the problem
+of h, oh and ho2. Extensive changes have been made, including the creation
+of 2 new modules and 5 new subroutines. I am afraid that the whole code
+will have to be downloaded. You will find it on
+acd.ucar.edu:/u/simonc/2dv5b
+I made this directory group-readable. 
+2dv5b/20.2yr.job is a typical script for paiute (note the new modules 
+to compile and the extensions in the input namelists). 
+2dv5b/idl is a directory with my new version of the IDL viewer, including
+the plotting of the new diurnal variation archives (see below).
+2dv5b/src is the model itself.
+
+I have extracted from chembox 7 subroutines. 2 new modules have been created :
+chem_xface.f and chem_rates.mods.f.
+chembox is now like a main to call the following subroutines :
+calc_chem_rates : calculates the temperature-dependent reaction rates.
+	The complete list of reactions is there.
+chem_psc : effect of the psc on chemistry. Note that Theresa's random 
+	fluctuation of temperature is *not* programmed
+chem_aero : effect of sulfate aerosols on chemistry
+day_sub : calculation of the short-lived species, based on PhotoChemical 
+	Equilibrium (PCE) partitioning ratios of the long-lived families.
+	The altitude-dependent partitioning of the new hox (h+oh+ho2) family
+	is there (see below)
+night_sub : this is still Stacy's code : it uses a Newton-Raphson scheme,
+	calculating and inverting the Jacobian matrix to integrate in time
+	o, o3, oh, ho2, no, no2, no3 and h. I tried a simplified
+	version of day_sub instead, with J's removed, and o1d, n, cl, br set to
+	0. This is faster, but the partitioning method developed for the members
+	of the hox family (see below) does not work well during night.
+chem_prpe_night : calculates chemical productions and losses of long-lived
+	and intermediate species during the night.
+chem_prpe_day : calculates chemical productions and losses of long-lived
+	and intermediate species during the day.
+chem_resol : not modified, still integrates in time the long-lived species by 
+	semi-implicit method and the intermediate species by HOV method.
+it_norm has been manually inlined into chembox.
+
+The main change in the science itself is the creation of a new family 
+hox = h + oh + ho2,  which has replaced h as a long-lived species with index 34.
+h is now a "short-lived" species with index 14. Several modules have been 
+modified, a new "trick" had to be programmed in the main for internal initial
+conditions, and the subroutines BOUNDY (asg.f) and ARCH were modified also.
+The calculation of hox, h, oh and ho2 uses 3 altitude regions :
+0-30km, 31-70km, 71-120km. hox is calculated only above 30km. Below 30km,
+hox is set to h+oh+ho2 in CHEM_BOX and its productions and losses in
+CHEM_PRPE_NIGHT and CHEM_PRPE_DAY are set to zero.
+The tough part was to partition this family. Here is the method I programmed
+in DAY_SUB and NIGHT_SUB :
+First we calculate r4 = h/oh from h PCE, between 0 and 70km. 
+Below 30km, oh and ho2 are in PCE and calculated directly from a quadratic 
+equation (Didier's method), then h = r4 * oh.
+Between 30 and 70km, we calculate r6 = ho2/oh from ho2 PCE. We then partition 
+the hox family, using r7 = oh/hox = 1 / (1+r4+r6) ; r8 = h/hox = r4*r7 and 
+r9 = ho2/hox = r6*r7 .
+Above 70km, we calculate r12=h/ho2 from ho2 PCE and r13=oh/ho2 from oh PCE.
+(note that h is NOT at PCE). We then partition the hox family, using
+r14 = ho2/hox = 1/(1+r12+r13) ; r15 = h/hox = r12*r14 and r16 = oh/hox = r13*r14
+
+The results are quite good : h reaches a mixing ratio of 1e-5 in the 
+thermosphere. The mesopause maximum of oh and ho2 is not as sharp as it was,
+except in the polar night where there is still a problem.
+The method is generally conservative and converges well, except at sunrise.
+Note that this obliged me to recalculate h2o every time hox was calculated,
+even if h2o seemed to have converged. Before this last correction, h2o was 
+slowly but continuously increasing at every sunrise.
+
+The next process I would like to improve is diffusion : It may be responsible 
+for some species taking randomly huge values at single points. Also, the new 
+molecular diffusion has a bad interaction with the upper boundary condition
+on h and h2 : I had to set these to fluxes of zero. They should be fluxes
+of 1e8 molec/cm2/s but, when combined with molecular diffusion, this depletes
+completely h and h2 above 110km.
+
+Finally, I have programmed a new archiving subroutine  (file diuvarch.f) to 
+output the diurnal variations of user-selected species .
+Since this new archive can become huge, the user has to choose up to 30 chemical
+species to output, at up to 10 precise dates. This is declared in the 
+'sim_controls' namelist (see 2dv5b/20.2yr.job). The list of species names has to
+follow the order defined in the module def_names.f, skipping the undesired ones.
+The chosen species will be written 16 times (2 diurnal cycles) for each date
+defined in ran_diuvarch(1:10) (the selected date and the next day). 
+The latest version of my IDL viewer (directory 2dv5b/idl, run it typing 
+"archopen" at the IDL prompt) permits to visualize the diurnal cycle of any 
+species,at any latitude and altitude :
+With these new diurnal archives, it offers in the menu "Special" the option 
+"Time-value". Select it, then click on the location of the contour plot where
+you want to see the diurnal variation of the currently selected species.
+By default, it will show 2 diurnal cycles, to check if the diunal variation
+is periodic. If you then select "Zoom" (in the menu "Special") the diurnal
+variation will be restricted to 24 hours, showing the sunrise and sunset time.
+
+I have not succeeded -yet- in improving the efficiency of the code : one year
+of simulation (without automatical inlining) requires 11hrs of CPU time on 
+paiute. Of these, 55% are taken by chembox. This is very amazing since chembox
+doesn't do anything else now than calling other subroutines. There is potential
+to make the code run twice faster, I just don't know how (yet).
+
+I will be back in Boulder on september 7. You can contact me in Brussels by
+sending e-mail to my usual adress : simonc@acd.ucar.edu  .
+
+Cheers,
+             Simon.

@@ -1,0 +1,110 @@
+                          All the runs for the thesis with gcc_sw(:)=0 use SOCRATES v6s32, output U*.nc
+                          -----------------------------------------------------------------------------
+
+  U0a,  U0b : CONTROL runs, SOLMIN                           Um0 : no GW drag
+        Us1 : SOLMAX                                         Um1 : Lindzen GW (v3cII65)
+        Us2 : SOLVAR                                         Um1a: Lindzen GW (v2.1c) & ftx
+        Us3 : SOLMIN-NO                                      Um2 : Hines GW
+        Us4 : SOLMAX-NO                                      Um3 : ChemHeat=0 at z>70km
+        Us5 : SOLMIN+LyaMAX                                  Um4 : no Lya param
+                                                             Um5 : no moldiff for CO2
+        Up0 : dyn_steps = 96                                 Um6 : Kzz*2 for chem only
+        Up1 : chem: 14 tsteps/day, i.e. chemdtm = 120+[0]    Um7 : use ftx, tidal wave breaking
+        Up2 : chem: 26 tsteps/day, i.e. chemdtm = 60+[0]
+        Up3 : chem: 116 tsteps/day, i.e. chemdtm=15+[-10,-5,-2,0,1,2,4,6,9,12]
+        Up4 : ONED,ldiag=25(35°N), chemdtm as tp3
+        Up5 : ONED,ldiag=25(35°N),304tsteps/day:chemdtm=5+[-3,-2,-1,0,1,2,3,4]
+ 
+basic: 370Kb/arch date ; heat: 850                               Kb/arch date ; chem: 2Mb/arch date
+In the table: 5d= "archive every 5 days" ; 4s = Mar/27 + Jun/25 + Sep/28 + Dec 27 ; nb without units are nb of arch dates
+
+                   BEGIN  ARCH0     |       SAVE  ARCH1    END    SAVE  ARCH2     |        |   ARCH3   END   SAVE  ARCH4   END
+                    9/28          1/16      9/28          1/16    9/28          1/16     9/28         1/16   9/28         1/16
+                    1995          1997      2002          2004    2007          2009     2011         2013   2017         2019
+____________________--|-__________--|-______-|--__________-|--____--|-__________--|-____---|-_________--|-___--|-_________---|
+SOLMIN                |             |        |             |        |             |
+t0a.basic 129Mb T_CD2 $      5d     |  45d   |     5d      |  45d   |      5d     $
+t0a.heat  114Mb T_CD2 $    15d+4s   |   4s   |   15d+4s    |   4s   |    15d+4s   $
+t0a.chem  109Mb T_CD5 $                          4s = 93                          $
+t0a.save              $                                             X             $
+ref0a      41Mb T_CD2 $                          1 month                          $
+______________________|_____________|________|_____________|________|_____________|________|____________|______|_____________|
+SOLMIN                                                              |             |        |            |      |             |
+t0b.basic 141Mb T_CD1                                               $      5d     |   45d  |     5d     | 45d  |     5d      $
+t0b.heat  107Mb T_CD3                                               $    15d+4s   |    4s  |   15d+4s   |  4s  |   15d+4s    $
+t0b.chem   94Mb T_CD4                                               $                          4s                            $
+ref0b      35Mb T_CD1                                               $                         1 month                        $
+____________________________________________________________________$_____________|________|____________|______|_____________|
+SOLMAX                |             |        |             |        |             |        |            |
+ts1.basic 141Mb T_CD1 $      5d     |  45d   |     5d      |              45d              |     5d     $
+ts1.heat  127Mb T_CD3 $    15d+4s   |   4s   |   15d+4s    |               4s              |   15d+4s   $
+ts1.chem  142Mb T_CD4 $                                      4s                                         $
+ts1.save              $                      X                                                          $
+refs1      54Mb T_CD1 $                                      1 month                                    $
+______________________|_____________|________|_____________|________|_____________|________|____________|_____________________
+SOLVAR                                       |             |        |             |        |            |      |             |
+ts2.basic 191Mb T_CD1                        $     5d      |  45d   |      5d     |   45d  |     5d     | 45d  |     5d      $
+ts2.heat  147Mb T_CD3                        $   15d+4s    |   4s   |    15d+4s   |    4s  |   15d+4s   |  4s  |   15d+4s    $
+ts2.chem  131Mb T_CD4                        $                                      4s                                       $
+ts2.save                                     $                                                                 X             $
+refs2      52Mb T_CD1                        $                                     1 month                                   $
+_____________________________________________|_____________|________|_____________|________|____________|______|_____________|
+SOLMIN-NO             |             |        |             |
+ts3.basic  85Mb T_CD2 $      5d     |  45d   |     5d      $
+ts3.heat   74Mb T_CD2 $    15d+4s   |   4s   |   15d+4s    $
+ts3.chem   68Mb T_CD5 $                4s                  $
+______________________|_____________|________|_____________|_____________________________________________
+SOLMAX-NO                                    |             |        |             |        |            |
+ts4.heat   81Mb T_CD3                        $   15d+4s    |            45d                |   15d+4s   $
+ts4.chem   86Mb T_CD4                        $                              4s                          $
+_____________________________________________|_____________|________|_____________|________|____________|
+SOLMIN+LyaMAX                                                       |             |        |            |
+ts5.heat   64Mb T_CD3                                               $    15d+4s   |    4s  |   15d+4s   $ 
+ts5.chem   45Mb                                                     $              4s                   $
+____________________________________________________________________|_____________|________|____________|
+no GW                                                               |             |
+Um0.basic  39Mb                                                     $     5d      $
+Um0.heat   28Mb                                                     $   15d+4s    $
+____________________________________________________________________|_____________|
+Lindzen GW                                                          |             |
+tm1.basic  39Mb T_CD2                                               $     5d      $
+tm1.heat   28Mb T_CD2                                               $   15d+4s    $
+____________________________________________________________________|_____________|
+Hines GW                                                            |             |
+tm2.basic  39Mb T_CD2                                               $     5d      $
+tm2.heat   28Mb T_CD2                                               $   15d+4s    $
+____________________________________________________________________|_____________|______________________
+ChemHeat=0 at z> 70km                                               |             |        |            |
+tm3.basic  86Mb T_CD5                                               $      5d     |   45d  |     5d     $
+tm3.heat   45Mb T_CD3                                               $    15d+4s   |    4s  |   15d+4s   $
+crs(O2,Lya)=1e-20cm2                                                |             |        |            |
+tm4.basic  86Mb T_CD5                                               $      5d     |   45d  |     5d     $
+tm4.heat   64Mb T_CD5                                               $    15d+4s   |    4s  |   15d+4s   $
+tm4.chem   45Mb T_CD5                                               $                 4s                $
+no moldiff for CO2                                                  |             |        |            |
+tm5.heat   64Mb T_CD5                                               $    15d+4s   |    4s  |   15d+4s   $
+tm5.chem   45Mb T_CD6                                               $                 4s                $
+____________________________________________________________________|_____________|________|____________|
+dyn_steps=96 (was tp2)                                              |             |
+?p0.basic  39Mb                                                     $     5d      $
+?p0.heat   28Mb                                                     $   15d+4s    $
+chem:14 tsteps/day                                                  |             |
+?p1.basic  39Mb                                                     $     5d      $
+?p1.heat   28Mb                                                     $   15d+4s    $
+?p1.chem   12Mb                                                     $     4s      $
+chem:26 tsteps/day                                                  |             |
+?p2.basic  39Mb                                                     $     5d      $
+?p2.heat   28Mb                                                     $   15d+4s    $
+?p2.chem   12Mb                                                     $     4s      $
+chem:116 tsteps/day                                                 |             |
+tp3.basic  39Mb T_CD5                                               $     5d      $
+tp3.heat   28Mb T_CD3                                               $   15d+4s    $
+tp3.chem   12Mb T_CD5                                               $     4s      $
+____________________________________________________________________|_____________|
+ONED, chem:116tsteps/day                                            |             |
+tp4.heat   12Mb T_CD2                                               $   15d+4s    $
+tp4.chem   12Mb T_CD6                                               $     4s      $
+ONED, chem:304tsteps/day                                            |             |
+tp5.heat   12Mb T_CD2                                               $   15d+4s    $
+tp5.chem   12Mb T_CD6                                               $     4s      $
+____________________________________________________________________|_____________|
