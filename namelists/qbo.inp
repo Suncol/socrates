@@ -6,7 +6,7 @@
  ncpus = 64
  daypas = 5
  chemdtm = 30.
- mainsw(8) = 2			! QBO param: 0-none ; 1-diabatic heating; 2-effective forcing ; 3-tropical wave forcing
+ mainsw(8) = 4			! QBO param: 0-none ; 1-diabatic heating; 2-effective forcing ; 3-tropical wave forcing
 /
  &io_parms
  data_dir = './data_in/'

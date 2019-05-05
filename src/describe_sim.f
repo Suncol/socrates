@@ -190,6 +190,9 @@
          text(l) = c(:i) // 'sim has QBO with effective forcing'
       else if( mainsw(8) == 3 ) then
          text(l) = c(:i) // 'sim has QBO with tropical wave forcing'
+      else if (mainsw(8) == 4 ) then
+         text(l) = c(:i) // 'sim has QBO with tropical wave forcing 
+     $     updated version'
       end if
       l = l + 1
       write(c,'(a,i2,a)') 'mainsw(9)= ',mainsw(9),' : '

@@ -119,6 +119,8 @@
 !-----------------------------------------------------------------------
       if( mainsw(8) == 3 ) then
          call dynf_qbo( )
+      elseif ( mainsw(8) == 4) then
+          call dynf_qbo2( daynum )
       else if( mainsw(8) == 1 .or. mainsw(8) == 2) then
          call qbo( daynum )
       end if

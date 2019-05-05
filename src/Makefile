@@ -14,7 +14,7 @@ SRCS = imp_slv.f                         \
        dyn_bvfreq.f        dyn_diffus_heat.f   dyn_main.f                  \
        dyn_solve.f         dyn_u.f             dyn_wup.f                   \
        dynf_pwave.f        dynf_tide.f         dynf_total.f                \
-       dynf_tropo.f        dynf_qbo.f	       fomichev98.f                \
+       dynf_tropo.f        dynf_qbo.f	       dynf_qbo2.f            fomichev98.f                \
        gltime.f            h2o_special.f       hdiff.f                     \
        heat_coeff.f        heat_ircool.f               \
        heat_rates.f        hines97.gwave.dyn.f init_from_ascii.f           \

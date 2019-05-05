@@ -121,7 +121,10 @@
           ftot = ftot + f_e                      ! forced by derived
       else if( mainsw(8) == 3 ) then
           ftot = ftot + f_tropic                    ! forcing by tropical Kelvin and Rossby-gravity waves
+      else if ( mainsw(8) == 4) then
+          ftot = ftot + f_tropic
       end if
+
       if( mlt_sw(1) == 1 ) ftot = ftot + fmvisc    ! forcing by molecular viscosity
       if( mlt_sw(2) == 1 ) ftot = ftot + ftx       ! forcing by tidal wave braking
       call VDERIV( ftot, basedz = ftotz )
